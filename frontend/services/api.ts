@@ -85,8 +85,10 @@ export function getHealth() {
   return request<HealthResponse>("/api/health");
 }
 
+export type DemoClaim = { claim: string; category: string; expected_verdict: string };
+
 export function getDemoClaims() {
-  return request<Array<string | { text?: string; claim?: string }>>("/api/demo-claims");
+  return request<DemoClaim[]>("/api/demo-claims");
 }
 
 export function getSources() {
@@ -117,5 +119,33 @@ export function submitReport(claimText: string, reportType = "SUSPICIOUS", seenB
       report_type: reportType,
       seen_before: seenBefore,
     }),
+  });
+}
+
+export type STTResponse = { text: string; language: string; confidence: number };
+
+export function speechToText(audioBlob: Blob, languageHint?: string) {
+  const form = new FormData();
+  form.append("file", audioBlob, "recording.webm");
+  if (languageHint) form.append("language_hint", languageHint);
+  return request<STTResponse>("/api/stt", { method: "POST", body: form });
+}
+
+export type TTSResponse = { audio_base64: string; mime_type: string };
+
+export function textToSpeech(text: string, language: string) {
+  return request<TTSResponse>("/api/tts", {
+    method: "POST",
+    body: JSON.stringify({ text, language }),
+  });
+}
+
+export type SyncItem = { idempotency_key: string; claim_text: string; language?: string };
+export type SyncResultItem = { idempotency_key: string; status: string; verification_id?: string; error?: string };
+
+export function syncPending(items: SyncItem[]) {
+  return request<{ results: SyncResultItem[] }>("/api/sync", {
+    method: "POST",
+    body: JSON.stringify({ items }),
   });
 }

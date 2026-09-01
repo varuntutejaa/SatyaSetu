@@ -25,8 +25,12 @@ import {
   Send,
   ShieldCheck,
   Sparkles,
+  SquareIcon,
   Upload,
   Users,
+  Volume2,
+  Wifi,
+  WifiOff,
   Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -36,11 +40,20 @@ import {
   getDemoClaims,
   getHealth,
   getSources,
+  speechToText,
   submitReport,
+  textToSpeech,
   verifyClaim as verifyClaimRequest,
   verifyImage,
 } from "@/services/api";
 import type { SourceOut, VerifyResponse } from "@/services/api";
+import { useLanguage, SUPPORTED_LANGUAGES } from "@/lib/i18n";
+import type { LanguageCode } from "@/lib/i18n";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { useSyncQueue } from "@/hooks/useSyncQueue";
+import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
+import { compressImage } from "@/lib/imageCompress";
+import { cacheSources, cacheVerification, getCachedVerification, getSetting, setSetting } from "@/lib/db";
 
 const fallbackClaims = [
   "PM-KISAN gives eligible farmer families Rs 6,000 per year in three installments.",
@@ -49,14 +62,7 @@ const fallbackClaims = [
   "Report cyber fraud quickly through the national cybercrime portal or helpline 1930.",
 ];
 
-const languages = [
-  ["en-IN", "English"],
-  ["hi-IN", "हिन्दी"],
-  ["ta-IN", "தமிழ்"],
-  ["te-IN", "తెలుగు"],
-  ["bn-IN", "বাংলা"],
-  ["mr-IN", "मराठी"],
-];
+const languages = SUPPORTED_LANGUAGES.map(({ code, label }) => [code, label] as [string, string]);
 
 const verdictStyles: Record<string, { label: string; className: string; color: string }> = {
   VERIFIED: { label: "Verified", className: "verdict-verified", color: "text-emerald-700" },
@@ -86,26 +92,30 @@ const channels = [
 ];
 
 export default function Home() {
+  const { language, setLanguage, t } = useLanguage();
+  const connectivity = useOnlineStatus();
+  const { pendingCount, enqueue, isSyncing } = useSyncQueue();
+  const recorder = useVoiceRecorder();
+
   const [claim, setClaim] = useState(fallbackClaims[0]);
-  const [language, setLanguage] = useState("en-IN");
   const [demoClaims, setDemoClaims] = useState<string[]>(fallbackClaims);
   const [result, setResult] = useState<VerifyResponse | null>(null);
   const [sources, setSources] = useState<SourceOut[]>([]);
   const [apiOnline, setApiOnline] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isReporting, setIsReporting] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [dataSaver, setDataSaver] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     getDemoClaims()
       .then((data) => {
-        const claims = Array.isArray(data)
-          ? data
-              .map((item) => (typeof item === "string" ? item : item.text ?? item.claim))
-              .filter((item): item is string => Boolean(item))
-          : [];
+        const claims = data.map((item) => item.claim).filter(Boolean);
         if (claims.length) setDemoClaims(claims.slice(0, 4));
       })
       .catch(() => setDemoClaims(fallbackClaims));
@@ -115,9 +125,18 @@ export default function Home() {
       .catch(() => setApiOnline(false));
 
     getSources()
-      .then(setSources)
+      .then((data) => {
+        setSources(data);
+        cacheSources(data).catch(() => {});
+      })
       .catch(() => setSources([]));
+
+    getSetting("dataSaver", false).then(setDataSaver).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    setSetting("dataSaver", dataSaver).catch(() => {});
+  }, [dataSaver]);
 
   const verdict = useMemo(() => {
     if (!result) return null;
@@ -125,16 +144,34 @@ export default function Home() {
   }, [result]);
 
   async function verifyClaim() {
-    if (claim.trim().length < 3) return;
-    setIsLoading(true);
+    const claimText = claim.trim();
+    if (claimText.length < 3) return;
     setError("");
     setNotice("");
+
+    if (connectivity === "offline") {
+      const cached = await getCachedVerification(claimText);
+      if (cached) {
+        // Never present cached data as live — the spec is explicit about this.
+        setResult({ ...cached.result, offline: true });
+        setNotice(t("offline.lastUpdate", { date: new Date(cached.cachedAt).toLocaleString() }));
+      } else {
+        await enqueue(claimText, language);
+        setResult(null);
+        setNotice(t("offline.queued"));
+      }
+      return;
+    }
+
+    setIsLoading(true);
     try {
-      setResult(await verifyClaimRequest(claim.trim(), language));
+      const response = await verifyClaimRequest(claimText, language);
+      setResult(response);
       setApiOnline(true);
+      cacheVerification(claimText, language, response).catch(() => {});
     } catch (err) {
       setApiOnline(false);
-      setError(err instanceof Error ? err.message : "Connect the FastAPI service on port 8001 to run the live verification flow.");
+      setError(err instanceof Error ? err.message : t("errors.aiUnavailable"));
     } finally {
       setIsLoading(false);
     }
@@ -143,18 +180,63 @@ export default function Home() {
   async function verifyScreenshot(file: File) {
     setIsLoading(true);
     setError("");
-    setNotice(`Reading ${file.name} with backend OCR...`);
+    setNotice(t("verify.compressing"));
     try {
-      const response = await verifyImage(file);
+      const optimized = await compressImage(file);
+      setNotice(`Reading ${optimized.name} with backend OCR...`);
+      const response = await verifyImage(optimized);
       setResult(response);
       setClaim(response.claim);
       setApiOnline(true);
       setNotice("Screenshot read and verified.");
+      cacheVerification(response.claim, language, response).catch(() => {});
     } catch (err) {
       setApiOnline(false);
-      setError(err instanceof Error ? err.message : "OCR verification failed.");
+      setError(err instanceof Error ? err.message : t("errors.ocrUnavailable"));
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function toggleRecording() {
+    setError("");
+    if (recorder.state === "recording") {
+      const blob = await recorder.stop();
+      if (!blob) return;
+      setIsTranscribing(true);
+      setNotice(t("verify.listening"));
+      try {
+        const transcription = await speechToText(blob, language);
+        setClaim(transcription.text);
+        setNotice("");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : t("errors.voiceUnavailable"));
+      } finally {
+        setIsTranscribing(false);
+      }
+      return;
+    }
+    await recorder.start();
+    if (recorder.error) setError(recorder.error);
+  }
+
+  async function playExplanation(text: string) {
+    setError("");
+    if (isSpeaking) {
+      audioRef.current?.pause();
+      setIsSpeaking(false);
+      return;
+    }
+    try {
+      const speech = await textToSpeech(text, language);
+      if (audioRef.current) {
+        audioRef.current.src = `data:${speech.mime_type};base64,${speech.audio_base64}`;
+        audioRef.current.onended = () => setIsSpeaking(false);
+        await audioRef.current.play();
+        setIsSpeaking(true);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("errors.voiceUnavailable"));
     }
   }
 
@@ -192,7 +274,10 @@ export default function Home() {
             <a href="#governance">Governance</a>
             <a href="#demo">Live demo</a>
           </nav>
-          <a className="nav-cta" href="#demo"><Play size={15} /> Run demo</a>
+          <div className="flex items-center gap-3">
+            <ConnectivityIndicator connectivity={connectivity} t={t} pendingCount={pendingCount} isSyncing={isSyncing} />
+            <a className="nav-cta" href="#demo"><Play size={15} /> Run demo</a>
+          </div>
         </div>
       </header>
 
@@ -233,7 +318,18 @@ export default function Home() {
               fileInputRef={fileInputRef}
               verifyScreenshot={verifyScreenshot}
               demoClaims={demoClaims}
+              t={t}
+              connectivity={connectivity}
+              pendingCount={pendingCount}
+              recorderState={recorder.state}
+              isTranscribing={isTranscribing}
+              isSpeaking={isSpeaking}
+              toggleRecording={toggleRecording}
+              playExplanation={playExplanation}
+              dataSaver={dataSaver}
+              setDataSaver={setDataSaver}
             />
+            <audio ref={audioRef} className="hidden" aria-hidden="true" />
           </div>
 
           <div className="mx-auto mt-8 max-w-5xl">
@@ -340,28 +436,40 @@ export default function Home() {
             <section className="demo-panel">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-xl font-black text-slate-950">Claim intake</h3>
-                <select className="select" value={language} onChange={(event) => setLanguage(event.target.value)} aria-label="Language">
+                <select className="select" value={language} onChange={(event) => setLanguage(event.target.value as LanguageCode)} aria-label="Language">
                   {languages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
               </div>
-              <textarea className="textarea mt-4" value={claim} onChange={(event) => setClaim(event.target.value)} />
+              <textarea className="textarea mt-4" value={claim} onChange={(event) => setClaim(event.target.value)} placeholder={t("verify.placeholder")} />
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <button className="hero-primary hero-primary-light" onClick={verifyClaim} disabled={isLoading}>
                   {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                  Run verification
+                  {t("verify.button")}
                 </button>
                 <div className="flex gap-2">
-                  <button className="icon-button" aria-label="Voice input"><Mic size={18} /></button>
+                  <button
+                    className={`icon-button ${recorder.state === "recording" ? "icon-button-active" : ""}`}
+                    aria-label={t("verify.startRecording")}
+                    onClick={toggleRecording}
+                    disabled={isTranscribing}
+                  >
+                    {isTranscribing ? <Loader2 className="animate-spin" size={18} /> : <Mic size={18} />}
+                  </button>
                   <button className="icon-button" aria-label="Cloud sync"><Cloud size={18} /></button>
                 </div>
               </div>
               {error ? <div className="error-strip"><AlertCircle size={18} /> {error}</div> : null}
+              {notice ? <div className="error-strip notice-strip"><CheckCircle2 size={18} /> {notice}</div> : null}
               <div className="mt-5 grid gap-2">
                 {demoClaims.map((item) => <button className="demo-chip" key={item} onClick={() => setClaim(item)}>{item}</button>)}
               </div>
             </section>
             <section className={`demo-panel ${verdict?.className ?? ""}`}>
-              {result && verdict ? <ResultPanel result={result} verdict={verdict} /> : <EmptyResult />}
+              {result && verdict ? (
+                <ResultPanel result={result} verdict={verdict} t={t} isSpeaking={isSpeaking} playExplanation={playExplanation} />
+              ) : (
+                <EmptyResult />
+              )}
             </section>
           </div>
         </div>
@@ -419,11 +527,21 @@ function VerificationChat({
   fileInputRef,
   verifyScreenshot,
   demoClaims,
+  t,
+  connectivity,
+  pendingCount,
+  recorderState,
+  isTranscribing,
+  isSpeaking,
+  toggleRecording,
+  playExplanation,
+  dataSaver,
+  setDataSaver,
 }: {
   claim: string;
   setClaim: (value: string) => void;
-  language: string;
-  setLanguage: (value: string) => void;
+  language: LanguageCode;
+  setLanguage: (value: LanguageCode) => void;
   result: VerifyResponse | null;
   verdict: { label: string; color: string } | null;
   sources: SourceOut[];
@@ -437,6 +555,16 @@ function VerificationChat({
   fileInputRef: RefObject<HTMLInputElement>;
   verifyScreenshot: (file: File) => void;
   demoClaims: string[];
+  t: (key: string, vars?: Record<string, string | number>) => string;
+  connectivity: "online" | "weak" | "offline";
+  pendingCount: number;
+  recorderState: "idle" | "recording" | "processing";
+  isTranscribing: boolean;
+  isSpeaking: boolean;
+  toggleRecording: () => void;
+  playExplanation: (text: string) => void;
+  dataSaver: boolean;
+  setDataSaver: (value: boolean) => void;
 }) {
   return (
     <section className="chat-shell" aria-label="SatyaSetu verification chat">
@@ -448,16 +576,31 @@ function VerificationChat({
         <div className="chat-tool-list">
           <ChatTool icon={FileSearch} label="Verify claim" active onClick={verifyClaim} />
           <ChatTool icon={Upload} label="Read screenshot" onClick={() => fileInputRef.current?.click()} />
-          <ChatTool icon={Mic} label="Voice note" />
+          <ChatTool
+            icon={Mic}
+            label={recorderState === "recording" ? t("verify.listening") : t("home.speak")}
+            active={recorderState === "recording"}
+            onClick={toggleRecording}
+          />
           <ChatTool icon={Languages} label="Translate reply" />
-          <ChatTool icon={Cloud} label="Offline sync" />
+          <ChatTool icon={Cloud} label={`${t("dashboard.syncNow")}${pendingCount ? ` (${pendingCount})` : ""}`} />
         </div>
         <div className="sidebar-card">
             <div className="text-sm font-black text-white">{apiOnline ? "Backend connected" : "Backend offline"}</div>
             <p className="mt-2 text-xs leading-5 text-slate-300">
               {sources.length ? `${sources.length} trusted sources loaded from FastAPI.` : "Start FastAPI on port 8001 for live evidence."}
             </p>
+            {connectivity !== "online" ? (
+              <p className="mt-2 text-xs leading-5 text-amber-300">{t(`connectivity.${connectivity}`)}</p>
+            ) : null}
+            {pendingCount > 0 ? (
+              <p className="mt-2 text-xs leading-5 text-cyan-200">{pendingCount} queued for sync</p>
+            ) : null}
           </div>
+          <label className="sidebar-toggle">
+            <span>{t("dashboard.dataSaver")}</span>
+            <input type="checkbox" checked={dataSaver} onChange={(event) => setDataSaver(event.target.checked)} />
+          </label>
         </div>
 
       <div className="chat-main">
@@ -467,10 +610,13 @@ function VerificationChat({
             <div className="text-xs font-bold text-slate-500">Evidence-backed answers for schemes, fraud, health, and public alerts</div>
           </div>
           <div className="flex items-center gap-2">
-            <select className="chat-select" value={language} onChange={(event) => setLanguage(event.target.value)} aria-label="Chat language">
+            <select className="chat-select" value={language} onChange={(event) => setLanguage(event.target.value as LanguageCode)} aria-label="Chat language">
               {languages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
             </select>
-            <span className={apiOnline ? "chat-live" : "chat-offline"}><Zap size={13} /> {apiOnline ? "API live" : "API offline"}</span>
+            <span className={apiOnline && connectivity !== "offline" ? "chat-live" : "chat-offline"}>
+              {connectivity === "offline" ? <WifiOff size={13} /> : <Zap size={13} />}
+              {connectivity === "offline" ? t("connectivity.offline") : apiOnline ? "API live" : "API offline"}
+            </span>
           </div>
         </div>
 
@@ -531,20 +677,39 @@ function VerificationChat({
               <div className="message-card result-message">
                 <div className="mb-3 flex flex-wrap items-center gap-2">
                   <span className={`verdict-badge ${verdict.color}`}>{verdict.label}</span>
-                  <span className="status-pill">{result.confidence} confidence</span>
+                  <span className="status-pill">{result.confidence} {t("verdict.confidence")}</span>
                   <span className="status-pill">{result.sourceCount} sources</span>
+                  {result.offline ? <span className="status-pill">{t("connectivity.offline")}</span> : null}
+                  <button className="icon-button icon-button-inline" aria-label={t("verdict.listen")} onClick={() => playExplanation(result.explanation)}>
+                    {isSpeaking ? <SquareIcon size={14} /> : <Volume2 size={14} />}
+                  </button>
                 </div>
                 <h3 className="text-lg font-black text-slate-950">{result.summary}</h3>
                 <p className="mt-2 text-sm leading-6 text-slate-700">{result.explanation}</p>
+                {result.confidenceFactors?.length ? (
+                  <ul className="mt-3 grid gap-1">
+                    {result.confidenceFactors.map((factor) => (
+                      <li className="text-xs font-bold text-slate-500" key={factor}>{factor}</li>
+                    ))}
+                  </ul>
+                ) : null}
                 <div className="mt-4 grid gap-2">
                   {result.evidence.slice(0, 2).map((item) => (
                     <div className="chat-evidence" key={item.id}>
                       <div className="text-xs font-black text-teal-700">{item.relationship} · {Math.round(item.relevance_score * 100)}%</div>
                       <div className="mt-1 text-sm font-black text-slate-950">{item.document_title}</div>
                       <div className="mt-1 text-xs font-bold text-slate-500">{item.source_name} · {item.source_domain}</div>
+                      {item.document_url ? (
+                        <a className="mt-1 inline-block text-xs font-bold text-teal-700 underline" href={item.document_url} target="_blank" rel="noopener noreferrer">
+                          {t("verdict.viewSource")}
+                        </a>
+                      ) : null}
                     </div>
                   ))}
                 </div>
+                {result.limitations?.length ? (
+                  <p className="mt-3 text-xs leading-5 text-amber-700">{result.limitations.join(" ")}</p>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -569,8 +734,15 @@ function VerificationChat({
         />
         <div className="composer">
           <button className="composer-icon" aria-label="Attach screenshot" onClick={() => fileInputRef.current?.click()}><Upload size={18} /></button>
-          <button className="composer-icon" aria-label="Voice input"><Mic size={18} /></button>
-          <textarea value={claim} onChange={(event) => setClaim(event.target.value)} placeholder="Ask SatyaSetu to verify anything..." />
+          <button
+            className={`composer-icon ${recorderState === "recording" ? "composer-icon-active" : ""}`}
+            aria-label={t("verify.startRecording")}
+            onClick={toggleRecording}
+            disabled={isTranscribing}
+          >
+            {isTranscribing ? <Loader2 className="animate-spin" size={18} /> : <Mic size={18} />}
+          </button>
+          <textarea value={claim} onChange={(event) => setClaim(event.target.value)} placeholder={t("verify.placeholder")} />
           <button className="send-button" onClick={verifyClaim} disabled={isLoading} aria-label="Send claim">
             {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
           </button>
@@ -578,12 +750,37 @@ function VerificationChat({
         <div className="chat-footer-actions">
           <button onClick={reportClaim} disabled={isReporting || isLoading}>
             {isReporting ? <Loader2 className="animate-spin" size={15} /> : <AlertCircle size={15} />}
-            Report suspicious claim
+            {t("report.suspicious")}
           </button>
           <span>{sources.length ? `${sources.length} sources synced` : "Sources load when backend is online"}</span>
         </div>
       </div>
     </section>
+  );
+}
+
+function ConnectivityIndicator({
+  connectivity,
+  t,
+  pendingCount,
+  isSyncing,
+}: {
+  connectivity: "online" | "weak" | "offline";
+  t: (key: string, vars?: Record<string, string | number>) => string;
+  pendingCount: number;
+  isSyncing: boolean;
+}) {
+  const Icon = connectivity === "offline" ? WifiOff : Wifi;
+  const dotClass = connectivity === "online" ? "conn-dot-online" : connectivity === "weak" ? "conn-dot-weak" : "conn-dot-offline";
+  return (
+    <div className="connectivity-indicator" title={t(`connectivity.${connectivity}`)}>
+      <span className={`conn-dot ${dotClass}`} />
+      <Icon size={13} />
+      <span className="hidden sm:inline">{t(`connectivity.${connectivity}`)}</span>
+      {pendingCount > 0 ? (
+        <span className="conn-pending">{isSyncing ? <Loader2 className="animate-spin" size={11} /> : pendingCount}</span>
+      ) : null}
+    </div>
   );
 }
 
@@ -660,29 +857,81 @@ function EmptyResult() {
   );
 }
 
-function ResultPanel({ result, verdict }: { result: VerifyResponse; verdict: { label: string; color: string } }) {
+function ResultPanel({
+  result,
+  verdict,
+  t,
+  isSpeaking,
+  playExplanation,
+}: {
+  result: VerifyResponse;
+  verdict: { label: string; color: string };
+  t: (key: string, vars?: Record<string, string | number>) => string;
+  isSpeaking: boolean;
+  playExplanation: (text: string) => void;
+}) {
   return (
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <span className={`verdict-badge ${verdict.color}`}><BadgeCheck size={17} /> {verdict.label}</span>
-        <span className="status-pill"><Clock3 size={14} /> {new Date(result.checkedAt).toLocaleTimeString()}</span>
+        <div className="flex items-center gap-2">
+          <button className="icon-button icon-button-inline" aria-label={t("verdict.listen")} onClick={() => playExplanation(result.explanation)}>
+            {isSpeaking ? <SquareIcon size={14} /> : <Volume2 size={14} />}
+          </button>
+          <span className="status-pill"><Clock3 size={14} /> {new Date(result.checkedAt).toLocaleTimeString()}</span>
+        </div>
       </div>
       <h3 className="text-2xl font-black text-slate-950">{result.summary}</h3>
       <p className="mt-3 text-sm leading-6 text-slate-700">{result.explanation}</p>
+      {result.verdict === "UNVERIFIED" ? (
+        <p className="mt-2 text-xs font-bold text-amber-700">{t("verdict.doNotTreatAsConfirmed")}</p>
+      ) : null}
       <dl className="mt-6 grid grid-cols-3 gap-2">
-        <Fact label="Confidence" value={result.confidence} />
+        <Fact label={t("verdict.confidence")} value={result.confidence} />
         <Fact label="Sources" value={String(result.sourceCount)} />
         <Fact label="Mode" value={result.offline ? "Offline" : "Live"} />
       </dl>
+      {result.confidenceFactors?.length ? (
+        <ul className="mt-4 grid gap-1">
+          {result.confidenceFactors.map((factor) => (
+            <li className="text-xs font-bold text-slate-500" key={factor}>{factor}</li>
+          ))}
+        </ul>
+      ) : null}
       <div className="mt-5 grid gap-3">
         {result.evidence.slice(0, 3).map((item) => (
           <article className="evidence-card p-4" key={item.id}>
             <div className="flex flex-wrap gap-2"><span className="status-pill">{item.relationship}</span><span className="status-pill">{Math.round(item.relevance_score * 100)}% relevant</span></div>
             <h4 className="mt-3 text-sm font-black text-slate-950">{item.document_title}</h4>
             <p className="mt-2 text-sm leading-5 text-slate-600">{item.reason}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
+              <span>{item.source_name}</span>
+              <span>·</span>
+              <span>{item.authority_level}</span>
+              {item.document_url ? (
+                <a className="text-teal-700 underline" href={item.document_url} target="_blank" rel="noopener noreferrer">
+                  {t("verdict.viewSource")}
+                </a>
+              ) : null}
+            </div>
           </article>
         ))}
       </div>
+      {result.howVerified?.length ? (
+        <details className="mt-5 how-verified">
+          <summary className="cursor-pointer text-sm font-black text-slate-950">{t("verdict.howVerified")}</summary>
+          <ol className="mt-3 grid gap-2">
+            {result.howVerified.map((step) => (
+              <li className="text-xs leading-5 text-slate-600" key={step.step}>
+                <span className="font-black text-slate-950">{step.label}.</span> {step.detail}
+              </li>
+            ))}
+          </ol>
+        </details>
+      ) : null}
+      {result.limitations?.length ? (
+        <p className="mt-4 text-xs leading-5 text-amber-700">{result.limitations.join(" ")}</p>
+      ) : null}
     </div>
   );
 }
