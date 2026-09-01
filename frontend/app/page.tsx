@@ -671,7 +671,6 @@ function VerificationChat({
             active={recorderState === "recording"}
             onClick={toggleRecording}
           />
-          <ChatTool icon={Languages} label="Translate reply" />
           <ChatTool icon={Cloud} label={`${t("dashboard.syncNow")}${pendingCount ? ` (${pendingCount})` : ""}`} />
           <ChatTool icon={PackageCheck} label="Offline packs" onClick={onOpenOfflinePacks} />
         </div>
