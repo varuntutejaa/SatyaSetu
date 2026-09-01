@@ -24,6 +24,9 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origin_list,
+    # Covers the production alias and every Vercel preview URL for this
+    # specific project, without needing a Render env var change per deploy.
+    allow_origin_regex=r"https://satyasetu(-[a-z0-9]+)?(-varuntutejaas-projects)?\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
