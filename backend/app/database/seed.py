@@ -87,6 +87,110 @@ SOURCES = [
         "authority_level": "AUTHORITATIVE",
         "description": "United Nations specialized agency for international public health.",
     },
+    {
+        "key": "pmjay",
+        "name": "Ayushman Bharat PM-JAY — National Health Authority",
+        "domain": "pmjay.gov.in",
+        "category": "HEALTHCARE",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for the Ayushman Bharat Pradhan Mantri Jan Arogya Yojana health insurance scheme.",
+    },
+    {
+        "key": "pmaymis",
+        "name": "PM Awas Yojana — Ministry of Housing & Urban Affairs",
+        "domain": "pmaymis.gov.in",
+        "category": "GOVERNMENT",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for the Pradhan Mantri Awas Yojana affordable-housing scheme.",
+    },
+    {
+        "key": "pmjdy",
+        "name": "PM Jan-Dhan Yojana — Department of Financial Services",
+        "domain": "pmjdy.gov.in",
+        "category": "BANKING",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for the Pradhan Mantri Jan-Dhan Yojana financial-inclusion scheme.",
+    },
+    {
+        "key": "nrega",
+        "name": "MGNREGA — Ministry of Rural Development",
+        "domain": "nrega.nic.in",
+        "category": "GOVERNMENT",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for the Mahatma Gandhi National Rural Employment Guarantee Act.",
+    },
+    {
+        "key": "mudra",
+        "name": "Pradhan Mantri MUDRA Yojana",
+        "domain": "mudra.org.in",
+        "category": "FINANCE",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for collateral-free micro-enterprise loans under PMMY.",
+    },
+    {
+        "key": "pmkvy",
+        "name": "PM Kaushal Vikas Yojana — Skill India",
+        "domain": "pmkvyofficial.org",
+        "category": "EDUCATION",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for the Ministry of Skill Development & Entrepreneurship's flagship training scheme.",
+    },
+    {
+        "key": "swachhbharat",
+        "name": "Swachh Bharat Mission",
+        "domain": "swachhbharatmission.ddws.gov.in",
+        "category": "GOVERNMENT",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for India's national sanitation and cleanliness mission.",
+    },
+    {
+        "key": "pmuy",
+        "name": "PM Ujjwala Yojana",
+        "domain": "pmuy.gov.in",
+        "category": "GOVERNMENT",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for the scheme providing LPG connections to disadvantaged households.",
+    },
+    {
+        "key": "pmfby",
+        "name": "PM Fasal Bima Yojana (Crop Insurance)",
+        "domain": "pmfby.gov.in",
+        "category": "GOVERNMENT",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for the national crop insurance scheme for farmers.",
+    },
+    {
+        "key": "jansuraksha",
+        "name": "Jan Suraksha Schemes (PMJJBY / PMSBY / APY)",
+        "domain": "jansuraksha.gov.in",
+        "category": "BANKING",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for government-backed life, accident insurance, and pension schemes.",
+    },
+    {
+        "key": "nsiindia",
+        "name": "National Savings Institute (Sukanya Samriddhi Yojana)",
+        "domain": "nsiindia.gov.in",
+        "category": "FINANCE",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for government small-savings schemes including Sukanya Samriddhi Yojana.",
+    },
+    {
+        "key": "wcd",
+        "name": "Ministry of Women & Child Development",
+        "domain": "wcd.nic.in",
+        "category": "GOVERNMENT",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Union ministry responsible for women and child welfare programmes including Beti Bachao Beti Padhao.",
+    },
+    {
+        "key": "myscheme",
+        "name": "MyScheme — National Government Services Portal",
+        "domain": "myscheme.gov.in",
+        "category": "OTHER_AUTHORITATIVE",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Government of India's unified search platform for verifying genuine central and state schemes.",
+    },
 ]
 
 DOCUMENTS = [
@@ -214,6 +318,215 @@ DOCUMENTS = [
             "messaging apps, which can cause harm or delay proper medical care."
         ),
     },
+    {
+        "source_key": "pmjay",
+        "title": "Ayushman Bharat PM-JAY health cover amount and eligibility",
+        "url": "https://pmjay.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "Ayushman Bharat PM-JAY provides eligible economically vulnerable families a health insurance "
+            "cover of up to ₹5 lakh per family per year for secondary and tertiary hospitalization at "
+            "empanelled public and private hospitals, at no cost to the beneficiary at the point of "
+            "treatment. Eligibility is based on Socio-Economic Caste Census deprivation and occupational "
+            "criteria — it is not a blanket entitlement automatically covering every citizen."
+        ),
+    },
+    {
+        "source_key": "pmaymis",
+        "title": "PM Awas Yojana provides subsidy-linked housing assistance, not free houses",
+        "url": "https://pmaymis.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "Pradhan Mantri Awas Yojana provides interest subsidy on home loans and financial assistance to "
+            "eligible economically weaker section, low-income, and middle-income households for "
+            "constructing or purchasing a pucca house, under the PMAY-Urban and PMAY-Gramin verticals. "
+            "Assistance is disbursed as a subsidy or installment-linked benefit subject to income-category "
+            "eligibility, not as a free house handed out to every applicant."
+        ),
+    },
+    {
+        "source_key": "pmjdy",
+        "title": "PM Jan-Dhan Yojana is a zero-balance bank account scheme, not a cash-gift scheme",
+        "url": "https://www.pmjdy.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "Pradhan Mantri Jan-Dhan Yojana allows any Indian citizen to open a zero-balance Basic Savings "
+            "Bank Deposit account at any bank or business correspondent, with no minimum balance "
+            "requirement, along with a RuPay debit card carrying accident insurance cover. It is a "
+            "financial-inclusion scheme; opening an account does not itself trigger a direct government cash "
+            "deposit, contrary to some viral claims."
+        ),
+    },
+    {
+        "source_key": "nrega",
+        "title": "MGNREGA guarantees 100 days of wage employment through registered job cards",
+        "url": "https://nrega.nic.in/",
+        "language": "en-IN",
+        "content": (
+            "MGNREGA (Mahatma Gandhi National Rural Employment Guarantee Act) legally guarantees at least "
+            "100 days of paid unskilled manual work per financial year to every rural household whose adult "
+            "members volunteer for it, at a wage rate notified by the state government. Work and wage "
+            "payment are provided through the local Gram Panchayat and linked to a registered job card. It "
+            "is not an unconditional cash payment handed out to anyone who simply asks for it."
+        ),
+    },
+    {
+        "source_key": "mudra",
+        "title": "PM MUDRA Yojana provides repayable loans, not grants",
+        "url": "https://www.mudra.org.in/",
+        "language": "en-IN",
+        "content": (
+            "Pradhan Mantri MUDRA Yojana provides collateral-free loans of up to ₹10 lakh to non-corporate, "
+            "non-farm small and micro enterprises through banks, NBFCs, and microfinance institutions, "
+            "categorized as Shishu, Kishor, and Tarun based on loan size. It is a loan scheme requiring "
+            "repayment with interest, not a grant or cash-transfer scheme."
+        ),
+    },
+    {
+        "source_key": "pmkvy",
+        "title": "PMKVY provides free skill training and certification, not a direct job guarantee",
+        "url": "https://www.pmkvyofficial.org/",
+        "language": "en-IN",
+        "content": (
+            "Pradhan Mantri Kaushal Vikas Yojana, the flagship scheme of the Ministry of Skill Development "
+            "and Entrepreneurship, provides free short-duration skill training to Indian youth and a "
+            "monetary reward on successful certification through recognized training centres. It certifies "
+            "employable skills; it does not itself guarantee direct government employment to every trainee."
+        ),
+    },
+    {
+        "source_key": "swachhbharat",
+        "title": "Swachh Bharat Mission funds toilet construction and sanitation, not general housing costs",
+        "url": "https://swachhbharatmission.ddws.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "The Swachh Bharat Mission provides financial incentive support toward construction of "
+            "individual household toilets for eligible rural and urban households, alongside solid waste "
+            "management infrastructure, as part of its sanitation and cleanliness objectives. It does not "
+            "fund general home construction or unrelated household expenses."
+        ),
+    },
+    {
+        "source_key": "pmuy",
+        "title": "PM Ujjwala Yojana gives a free LPG connection; refills are paid at market price",
+        "url": "https://www.pmuy.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "Pradhan Mantri Ujjwala Yojana provides an LPG gas connection at no upfront deposit to adult "
+            "women from economically disadvantaged households, replacing traditional cooking fuels with "
+            "cleaner LPG. Beneficiaries are still required to pay for subsequent LPG refills at the "
+            "applicable market price. Refills are not free under the base scheme, contrary to some viral "
+            "claims."
+        ),
+    },
+    {
+        "source_key": "pmfby",
+        "title": "PM Fasal Bima Yojana crop insurance is assessed via official crop-cutting experiments",
+        "url": "https://pmfby.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "Pradhan Mantri Fasal Bima Yojana provides crop insurance to farmers against yield losses from "
+            "non-preventable natural risks such as drought, flood, and pest attack, from pre-sowing to "
+            "post-harvest stages, on an area-approach basis, with the farmer paying only a nominal share of "
+            "the premium while the government subsidizes the rest. Claims are assessed through official "
+            "crop-cutting experiments and notified procedures, not on a self-declared basis."
+        ),
+    },
+    {
+        "source_key": "jansuraksha",
+        "title": "PMJJBY, PMSBY and Atal Pension Yojana are opt-in schemes with defined eligibility",
+        "url": "https://www.jansuraksha.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "Pradhan Mantri Jeevan Jyoti Bima Yojana (PMJJBY) and Pradhan Mantri Suraksha Bima Yojana "
+            "(PMSBY) are government-backed life and accident insurance schemes offering affordable "
+            "annual-renewal cover to bank account holders within a specified age range, with premiums "
+            "auto-debited from the linked bank account only with the subscriber's consent. Atal Pension "
+            "Yojana (APY) is a separate voluntary pension scheme for the unorganised sector guaranteeing a "
+            "fixed monthly pension after age 60, based on the subscriber's own contribution amount and age "
+            "of joining — none of these enroll a person automatically without consent."
+        ),
+    },
+    {
+        "source_key": "nsiindia",
+        "title": "Sukanya Samriddhi Yojana is a parent-funded savings account, not a government cash gift",
+        "url": "https://www.nsiindia.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "Sukanya Samriddhi Yojana is a small-savings scheme for a girl child, allowing a parent or "
+            "guardian to open an account for a girl below 10 years of age at a post office or authorised "
+            "bank, with deposits between a government-notified minimum and maximum annual limit, maturing "
+            "to support her education or marriage expenses. It is a savings account funded by the "
+            "depositor's own contributions, not a scheme where the government deposits money into the "
+            "account on its own initiative."
+        ),
+    },
+    {
+        "source_key": "wcd",
+        "title": "Beti Bachao Beti Padhao is an awareness and welfare campaign, not a direct cash scheme",
+        "url": "https://wcd.nic.in/",
+        "language": "en-IN",
+        "content": (
+            "Beti Bachao Beti Padhao is a Ministry of Women and Child Development campaign focused on "
+            "addressing the declining child sex ratio and promoting the education, protection, and welfare "
+            "of the girl child through awareness generation and multi-sectoral action, working alongside "
+            "enabling schemes such as Sukanya Samriddhi Yojana — it is not itself a single direct "
+            "cash-transfer programme paid to individual families."
+        ),
+    },
+    {
+        "source_key": "myscheme",
+        "title": "Verify any scheme claim on the National Government Services Portal before believing it",
+        "url": "https://www.myscheme.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "The National Government Services Portal, myscheme.gov.in, is the Government of India's unified "
+            "search platform for checking the eligibility criteria, benefits, and application process of "
+            "genuine central and state government schemes. Citizens are encouraged to look up a scheme's "
+            "actual name on myscheme.gov.in or the concerned ministry's official website before believing or "
+            "acting on a message claiming a new government scheme or benefit that is not listed there."
+        ),
+    },
+    {
+        "source_key": "cybercrime",
+        "title": "'Digital arrest' video calls are not a real legal procedure",
+        "url": "https://www.cybercrime.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "The Indian Cyber Crime Coordination Centre has warned that 'digital arrest' scams — where "
+            "fraudsters posing as police, customs, or investigation agency officials make video calls "
+            "threatening arrest unless money is paid immediately — are not a real legal procedure. No "
+            "genuine law enforcement agency arrests or detains a person over a video call or demands money "
+            "transfers to avoid arrest. Citizens should never make payments under such threats and should "
+            "verify by contacting the police through official channels."
+        ),
+    },
+    {
+        "source_key": "rbi",
+        "title": "Banks never ask customers to update KYC by clicking a link or sharing OTP",
+        "url": "https://www.rbi.org.in/",
+        "language": "en-IN",
+        "content": (
+            "RBI and banks have repeatedly clarified that they never ask customers to update KYC details, "
+            "share OTPs, PINs, or passwords, or click links in SMS or WhatsApp messages to avoid account "
+            "suspension. Messages threatening immediate account blocking unless a link is clicked are a "
+            "common phishing pattern and should be reported through the bank's official channel, not acted "
+            "upon."
+        ),
+    },
+    {
+        "source_key": "pib",
+        "title": "Genuine government job recruitment never demands payment for guaranteed selection",
+        "url": "https://pib.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "Genuine government job recruitment is conducted only through official notifications published "
+            "on the concerned department's or recruitment board's own website — such as SSC, UPSC, IBPS, or "
+            "a state public service commission — and never demands payment for guaranteed selection. "
+            "Messages promising a confirmed government job in exchange for a fee are fraudulent and should "
+            "be verified against the official recruiting body's notification before any payment is made."
+        ),
+    },
 ]
 
 DEMO_CLAIMS = [
@@ -251,6 +564,31 @@ DEMO_CLAIMS = [
         "claim": "The government has announced a new toll-free helpline 14545 for farmers to report crop damage from wild animals.",
         "category": "Public service",
         "expected_verdict": "UNVERIFIED",
+    },
+    {
+        "claim": "Ayushman Bharat PM-JAY provides free health insurance cover of up to ₹10 lakh per family per year.",
+        "category": "Healthcare claim",
+        "expected_verdict": "CONTRADICTED",
+    },
+    {
+        "claim": "PM Ujjwala Yojana gives women free LPG cylinder refills for life after the first connection.",
+        "category": "Government scheme",
+        "expected_verdict": "CONTRADICTED",
+    },
+    {
+        "claim": "MGNREGA guarantees at least 100 days of paid work per year to rural households who volunteer for it.",
+        "category": "Government scheme",
+        "expected_verdict": "VERIFIED",
+    },
+    {
+        "claim": "A government official video-called me saying I am under digital arrest and must pay a fine immediately or be arrested.",
+        "category": "Financial scam",
+        "expected_verdict": "CONTRADICTED",
+    },
+    {
+        "claim": "My bank sent an SMS asking me to click a link to update my KYC immediately or my account will be blocked.",
+        "category": "Financial scam",
+        "expected_verdict": "CONTRADICTED",
     },
 ]
 

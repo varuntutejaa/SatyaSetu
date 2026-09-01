@@ -85,9 +85,15 @@ def _negation_mismatch(claim: str, content: str, shared_tokens: set[str]) -> boo
         else:
             mismatches += 1
 
-    if mismatches == 0:
-        return False
-    return mismatches >= max(1, round(matches * 0.34))
+    # Ambiguous tokens (negated in one clause, plain in another within the
+    # same text) are already excluded upstream, so a token that clears this
+    # far is a clean, clause-scoped negation flip — not noise. A ratio
+    # threshold against `matches` was tried here and rejected: documents
+    # naturally share many correctly-matching topic/scheme-name words
+    # alongside a single genuine polarity flip (e.g. "free" vs "not ...
+    # free"), and requiring mismatches to be ~34% of matches let that one
+    # real signal get diluted into a false SUPPORTS on longer documents.
+    return mismatches >= 1
 
 
 class RuleBasedLLMProvider(LLMProvider):

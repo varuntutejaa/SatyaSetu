@@ -19,6 +19,23 @@ _TOKEN_RE = re.compile(r"[\wऀ-ॿ਀-੿]+", re.UNICODE)
 _STOPWORDS = {
     "the", "is", "a", "an", "of", "to", "and", "in", "for", "on", "are",
     "was", "were", "be", "has", "have", "will", "that", "this", "it",
+    # Generic pronouns/relative-clause words — near-zero topical signal,
+    # but incidental matches between unrelated clauses (e.g. "who" showing
+    # up in both a claim's relative clause and an evidence document's
+    # unrelated negated clause) were producing false contradiction flags.
+    "who", "whose", "which", "whom", "anyone", "someone", "something",
+    "these", "those", "such", "as", "at", "by", "with", "from",
+    "its", "their", "there",
+    # Generic scheme-document vocabulary — appears near-identically across
+    # most Government of India scheme descriptions and, left unfiltered,
+    # caused unrelated schemes to look topically similar purely from
+    # shared boilerplate words like "eligible families... per year".
+    # Deliberately excludes anything in rule_based_llm._NEGATION_TRIGGERS.
+    "pm", "eligible", "eligibility", "family", "families", "per",
+    "provide", "provides", "providing", "scheme", "schemes", "government",
+    "india", "indian", "official", "national", "under", "programme",
+    "program", "ministry", "citizens", "citizen", "beneficiary",
+    "beneficiaries",
 }
 
 
