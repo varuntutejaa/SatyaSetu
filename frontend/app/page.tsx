@@ -54,6 +54,8 @@ import { useSyncQueue } from "@/hooks/useSyncQueue";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { compressImage } from "@/lib/imageCompress";
 import { cacheSources, cacheVerification, getCachedVerification, getSetting, setSetting } from "@/lib/db";
+import { matchOfflinePack } from "@/lib/offlinePacks";
+import { WinnerFeatures } from "@/components/WinnerFeatures";
 
 const fallbackClaims = [
   "PM-KISAN gives eligible farmer families Rs 6,000 per year in three installments.",
@@ -107,6 +109,7 @@ export default function Home() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [dataSaver, setDataSaver] = useState(false);
+  const [installedPackIds, setInstalledPackIds] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -132,6 +135,7 @@ export default function Home() {
       .catch(() => setSources([]));
 
     getSetting("dataSaver", false).then(setDataSaver).catch(() => {});
+    getSetting<string[]>("installedOfflinePacks", []).then(setInstalledPackIds).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -143,8 +147,8 @@ export default function Home() {
     return verdictStyles[result.verdict] ?? verdictStyles.UNVERIFIED;
   }, [result]);
 
-  async function verifyClaim() {
-    const claimText = claim.trim();
+  async function runVerification(input: string) {
+    const claimText = input.trim();
     if (claimText.length < 3) return;
     setError("");
     setNotice("");
@@ -156,6 +160,13 @@ export default function Home() {
         setResult({ ...cached.result, offline: true });
         setNotice(t("offline.lastUpdate", { date: new Date(cached.cachedAt).toLocaleString() }));
       } else {
+        const packResult = matchOfflinePack(claimText, installedPackIds, language);
+        if (packResult) {
+          setResult(packResult);
+          setNotice("Verified on this device with a downloaded trust pack. Check the saved update date before acting.");
+          cacheVerification(claimText, language, packResult).catch(() => {});
+          return;
+        }
         await enqueue(claimText, language);
         setResult(null);
         setNotice(t("offline.queued"));
@@ -171,10 +182,34 @@ export default function Home() {
       cacheVerification(claimText, language, response).catch(() => {});
     } catch (err) {
       setApiOnline(false);
-      setError(err instanceof Error ? err.message : t("errors.aiUnavailable"));
+      const packResult = matchOfflinePack(claimText, installedPackIds, language);
+      if (packResult) {
+        setResult(packResult);
+        setNotice("The live service is unavailable, so SatyaSetu used a downloaded trust pack and marked the result offline.");
+        cacheVerification(claimText, language, packResult).catch(() => {});
+      } else {
+        setError(err instanceof Error ? err.message : t("errors.aiUnavailable"));
+      }
     } finally {
       setIsLoading(false);
     }
+  }
+
+  async function verifyClaim() {
+    await runVerification(claim);
+  }
+
+  async function verifyForwardedClaim(text: string) {
+    setClaim(text);
+    await runVerification(text);
+  }
+
+  function toggleOfflinePack(packId: string) {
+    setInstalledPackIds((current) => {
+      const next = current.includes(packId) ? current.filter((id) => id !== packId) : [...current, packId];
+      setSetting("installedOfflinePacks", next).catch(() => {});
+      return next;
+    });
   }
 
   async function verifyScreenshot(file: File) {
@@ -300,6 +335,20 @@ export default function Home() {
           </div>
 
           <div className="mx-auto mt-10 max-w-5xl">
+            <WinnerFeatures
+              claim={claim}
+              result={result}
+              installedPackIds={installedPackIds}
+              isLoading={isLoading}
+              recorderState={recorder.state}
+              onVerifyForward={verifyForwardedClaim}
+              onPickScreenshot={() => fileInputRef.current?.click()}
+              onToggleRecording={toggleRecording}
+              onTogglePack={toggleOfflinePack}
+            />
+          </div>
+
+          <div className="mx-auto mt-5 max-w-5xl">
             <VerificationChat
               claim={claim}
               setClaim={setClaim}
