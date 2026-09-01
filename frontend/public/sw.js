@@ -28,6 +28,16 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return; // never cache POST (/api/verify, /api/ocr, ...)
 
   const url = new URL(request.url);
+
+  // Connectivity probes (see hooks/useOnlineStatus.ts) must pass straight
+  // through to the real network with no cache fallback — otherwise a probe
+  // during a true outage would silently succeed from cache, and the app
+  // would keep claiming to be "online" while actually offline.
+  if (url.searchParams.has("_swbypass")) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
   const isApiGet = /\/api\/(sources|demo-claims|health)/.test(url.pathname);
 
   if (isApiGet) {
