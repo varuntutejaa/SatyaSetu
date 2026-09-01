@@ -1,0 +1,23 @@
+# Infra-as-code record of the Render web service (created live via `render services create`).
+# Re-applying this blueprint from the Render dashboard ("New > Blueprint") would reproduce it.
+services:
+  - type: web
+    name: satyasetu-backend
+    runtime: python
+    plan: free
+    region: singapore
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: CORS_ORIGINS
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: LLM_API_KEY
+        sync: false
