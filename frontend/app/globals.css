@@ -145,6 +145,31 @@ a { text-decoration: none; }
   line-height: 0.93;
 }
 
+.hero-points {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  max-width: 640px;
+  list-style: none;
+  padding: 0;
+}
+
+.hero-points li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  color: #e2e8f0;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.hero-points li svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  color: #6ee7b7;
+}
+
 .hero-primary {
   gap: 10px;
   min-height: 52px;

@@ -346,12 +346,11 @@ export default function Home() {
               <span className="premium-pill"><Radio size={14} /> Built for crisis velocity</span>
             </div>
             <h1 className="hero-title">SatyaSetu</h1>
-            <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">
-              SatyaSetu checks the messages, screenshots, and voice notes you receive against real
-              government, health, and financial sources — in your language, on WhatsApp, by phone,
-              or right here on this page. Every answer comes with the evidence behind it, so you
-              never have to just take an AI's word for it.
-            </p>
+            <ul className="hero-points">
+              <li><CheckCircle2 size={18} /> Checks messages, screenshots, and voice notes against real government, health, and financial sources</li>
+              <li><CheckCircle2 size={18} /> Works in your language — on WhatsApp, by phone, or right here</li>
+              <li><CheckCircle2 size={18} /> Every answer comes with the evidence behind it, never just an AI's word</li>
+            </ul>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a className="hero-primary" href="#assistant">Verify a claim <ArrowRight size={18} /></a>
             </div>
