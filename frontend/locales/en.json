@@ -1,0 +1,113 @@
+{
+  "app": {
+    "name": "SatyaSetu",
+    "tagline": "Evidence before belief.",
+    "subtitle": "Check government, healthcare and financial information in your language."
+  },
+  "home": {
+    "cta": "Check information before you trust or forward it.",
+    "speak": "Speak",
+    "upload": "Scan Screenshot",
+    "type": "Enter Text",
+    "tryDemo": "Try a demo",
+    "recentChecks": "Recent checks"
+  },
+  "connectivity": {
+    "online": "Live verification available",
+    "weak": "Slow connection — using data saver",
+    "offline": "Offline mode — using cached evidence"
+  },
+  "language": {
+    "select": "Language",
+    "en-IN": "English",
+    "hi-IN": "हिंदी",
+    "pa-IN": "ਪੰਜਾਬੀ"
+  },
+  "verify": {
+    "placeholder": "Paste or type the message you want to check...",
+    "button": "VERIFY",
+    "listening": "Listening...",
+    "stopRecording": "Stop",
+    "startRecording": "Tap to speak",
+    "uploadPrompt": "Tap to upload a screenshot",
+    "compressing": "Preparing image...",
+    "stageAnalyzing": "Analyzing claim...",
+    "stageSearching": "Searching trusted sources...",
+    "stageComparing": "Comparing evidence...",
+    "stageDone": "Done"
+  },
+  "verdict": {
+    "VERIFIED": "VERIFIED",
+    "UNVERIFIED": "UNVERIFIED",
+    "CONTRADICTED": "CONTRADICTED",
+    "VERIFIED_desc": "Your claim is supported by authoritative information.",
+    "UNVERIFIED_desc": "We could not find enough authoritative evidence to confirm this claim.",
+    "CONTRADICTED_desc": "A trusted source contains information that conflicts with this claim.",
+    "confidence": "Confidence",
+    "listen": "Listen",
+    "stop": "Stop",
+    "copy": "Copy",
+    "share": "Share",
+    "viewEvidence": "View Evidence",
+    "viewSource": "View Source",
+    "seeWhatWeChecked": "See what we checked",
+    "howVerified": "How we verified this",
+    "doNotTreatAsConfirmed": "Do not treat this information as confirmed.",
+    "lastUpdated": "Last updated"
+  },
+  "evidence": {
+    "title": "Evidence",
+    "source": "Source",
+    "authorityLevel": "Authority level",
+    "officialDomain": "Official domain",
+    "published": "Published date",
+    "retrieved": "Retrieved date",
+    "whyItMatters": "Why it matters",
+    "openSource": "Open original source",
+    "noEvidence": "No authoritative evidence found."
+  },
+  "report": {
+    "prompt": "Have you received this message?",
+    "yes": "Yes",
+    "no": "No",
+    "suspicious": "Suspicious message",
+    "scam": "Scam",
+    "incorrect": "Incorrect information",
+    "outdated": "Outdated information",
+    "count": "{count} users reported this message.",
+    "disclaimer": "Community reports have been received. Independent verification is still required.",
+    "thanks": "Thank you — your report has been recorded."
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "recentChecks": "Recent checks",
+    "offlineStatus": "Offline knowledge status",
+    "language": "Language",
+    "dataSaver": "Data Saver Mode",
+    "dataSaverOn": "Data Saver ON",
+    "storage": "Storage",
+    "lastSync": "Last sync",
+    "syncNow": "Sync now"
+  },
+  "offline": {
+    "banner": "You are offline. Showing cached results where available.",
+    "unavailable": "Current verification is unavailable offline.",
+    "lastUpdate": "Last trusted-source update: {date}",
+    "reconnect": "Reconnect for the latest evidence.",
+    "demoToggle": "Offline Demo Mode",
+    "queued": "Saved — will verify automatically when you're back online."
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again.",
+    "aiUnavailable": "Verification service temporarily unavailable.",
+    "noEvidence": "No authoritative evidence found.",
+    "sourceUnavailable": "Source could not be reached. Previous cached information is shown if available.",
+    "offlineNeedsConnection": "You are offline. We can check cached information, but current verification requires connectivity.",
+    "voiceUnavailable": "Voice service unavailable. You can type your claim instead.",
+    "ocrUnavailable": "Could not read this image. Please try typing the message instead.",
+    "fileTooLarge": "This file is too large. Please choose a smaller image."
+  },
+  "privacy": {
+    "notice": "We minimize stored data and allow deletion."
+  }
+}
