@@ -4,7 +4,8 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 
 from app.models import Claim, Evidence, Verification
-from app.providers.base import EmbeddingProvider, LLMProvider
+from app.providers.base import EmbeddingProvider, LLMProvider, ProviderUnavailableError
+from app.providers.llm.rule_based_llm import RuleBasedLLMProvider
 from app.rag.retrieval import retrieve_evidence
 from app.services.claim_extraction import extract_claim
 from app.verification.engine import run_verification
@@ -32,7 +33,17 @@ async def run_verification_pipeline(
 
     limitations = []
     if evidence:
-        comparison = await llm.compare_claim_to_evidence(extracted.normalized_text, evidence)
+        try:
+            comparison = await llm.compare_claim_to_evidence(extracted.normalized_text, evidence)
+        except ProviderUnavailableError:
+            # A configured LLM (rate-limited, down, bad key, ...) never takes
+            # the whole verification pipeline down — fall back to the
+            # deterministic rule-based comparator so the user still gets an
+            # evidence-backed verdict, just with a noted limitation.
+            comparison = await RuleBasedLLMProvider().compare_claim_to_evidence(extracted.normalized_text, evidence)
+            comparison.setdefault("limitations", []).append(
+                "The configured AI comparator was unavailable; a rule-based comparison was used instead."
+            )
         assessments = comparison.get("evidence_assessments", [])
         limitations.extend(comparison.get("limitations", []))
     else:
