@@ -6,7 +6,6 @@ import {
   BadgeCheck,
   BarChart3,
   CheckCircle2,
-  ChevronRight,
   Clock3,
   Cloud,
   Database,
@@ -18,8 +17,8 @@ import {
   Loader2,
   LockKeyhole,
   Mic,
+  PackageCheck,
   PhoneCall,
-  Play,
   Radio,
   ScanText,
   Send,
@@ -56,6 +55,7 @@ import { compressImage } from "@/lib/imageCompress";
 import { cacheSources, cacheVerification, getCachedVerification, getSetting, setSetting } from "@/lib/db";
 import { matchOfflinePack } from "@/lib/offlinePacks";
 import { WinnerFeatures } from "@/components/WinnerFeatures";
+import type { FeatureDialog } from "@/components/WinnerFeatures";
 
 const fallbackClaims = [
   "PM-KISAN gives eligible farmer families Rs 6,000 per year in three installments.",
@@ -100,6 +100,7 @@ export default function Home() {
   const recorder = useVoiceRecorder();
 
   const [claim, setClaim] = useState(fallbackClaims[0]);
+  const [sentClaim, setSentClaim] = useState(fallbackClaims[0]);
   const [demoClaims, setDemoClaims] = useState<string[]>(fallbackClaims);
   const [result, setResult] = useState<VerifyResponse | null>(null);
   const [sources, setSources] = useState<SourceOut[]>([]);
@@ -110,6 +111,7 @@ export default function Home() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [dataSaver, setDataSaver] = useState(false);
   const [installedPackIds, setInstalledPackIds] = useState<string[]>([]);
+  const [dialog, setDialog] = useState<FeatureDialog>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -152,6 +154,8 @@ export default function Home() {
     if (claimText.length < 3) return null;
     setError("");
     setNotice("");
+    setSentClaim(claimText);
+    setClaim("");
 
     if (connectivity === "offline") {
       const cached = await getCachedVerification(claimText);
@@ -208,6 +212,19 @@ export default function Home() {
     return runVerification(text);
   }
 
+  function scrollToAssistant() {
+    setDialog(null);
+    document.getElementById("assistant")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function openEvidenceReceipt() {
+    if (result) {
+      setDialog("receipt");
+    } else {
+      scrollToAssistant();
+    }
+  }
+
   function toggleOfflinePack(packId: string) {
     setInstalledPackIds((current) => {
       const next = current.includes(packId) ? current.filter((id) => id !== packId) : [...current, packId];
@@ -226,6 +243,7 @@ export default function Home() {
       const response = await verifyImage(optimized);
       setResult(response);
       setClaim(response.claim);
+      setSentClaim(response.claim);
       setApiOnline(true);
       setNotice("Screenshot read and verified.");
       cacheVerification(response.claim, language, response).catch(() => {});
@@ -308,14 +326,13 @@ export default function Home() {
             </div>
           </a>
           <nav className="hidden items-center gap-7 text-sm font-bold text-cyan-50/78 lg:flex">
-            <a href="#platform">Platform</a>
-            <a href="#flows">Flows</a>
-            <a href="#governance">Governance</a>
-            <a href="#demo">Live demo</a>
+            <button type="button" className="nav-link" onClick={() => setDialog("forward")}>WhatsApp</button>
+            <button type="button" className="nav-link" onClick={() => setDialog("ivr")}>Instant Voice</button>
+            <a className="nav-link" href="#assistant">AI Assistant</a>
+            <button type="button" className="nav-link" onClick={openEvidenceReceipt}>Evidence Receipt</button>
           </nav>
           <div className="flex items-center gap-3">
             <ConnectivityIndicator connectivity={connectivity} t={t} pendingCount={pendingCount} isSyncing={isSyncing} />
-            <a className="nav-cta" href="#demo"><Play size={15} /> Run demo</a>
           </div>
         </div>
       </header>
@@ -328,13 +345,15 @@ export default function Home() {
               <span className="premium-pill"><Landmark size={14} /> GovTech verification OS</span>
               <span className="premium-pill"><Radio size={14} /> Built for crisis velocity</span>
             </div>
-            <h1 className="hero-title">Evidence-grade public trust, built for the next 100 million citizens.</h1>
+            <h1 className="hero-title">SatyaSetu</h1>
             <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-200">
-              SatyaSetu gives governments, banks, NGOs, and civic command centers a multilingual verification layer for viral claims, scheme confusion, fraud messages, and health misinformation.
+              SatyaSetu checks the messages, screenshots, and voice notes you receive against real
+              government, health, and financial sources — in your language, on WhatsApp, by phone,
+              or right here on this page. Every answer comes with the evidence behind it, so you
+              never have to just take an AI's word for it.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a className="hero-primary" href="#demo">Verify a claim <ArrowRight size={18} /></a>
-              <a className="hero-secondary" href="#flows">View response flows <ChevronRight size={18} /></a>
+              <a className="hero-primary" href="#assistant">Verify a claim <ArrowRight size={18} /></a>
             </div>
           </div>
 
@@ -345,17 +364,21 @@ export default function Home() {
               installedPackIds={installedPackIds}
               isLoading={isLoading}
               recorderState={recorder.state}
+              dialog={dialog}
+              setDialog={setDialog}
               onVerifyForward={verifyForwardedClaim}
               onPickScreenshot={() => fileInputRef.current?.click()}
               onToggleRecording={toggleRecording}
               onTogglePack={toggleOfflinePack}
+              onScrollToAssistant={scrollToAssistant}
             />
           </div>
 
-          <div className="mx-auto mt-5 max-w-5xl">
+          <div id="assistant" className="mx-auto mt-5 max-w-5xl scroll-mt-24">
             <VerificationChat
               claim={claim}
               setClaim={setClaim}
+              sentClaim={sentClaim}
               language={language}
               setLanguage={setLanguage}
               result={result}
@@ -381,6 +404,7 @@ export default function Home() {
               playExplanation={playExplanation}
               dataSaver={dataSaver}
               setDataSaver={setDataSaver}
+              onOpenOfflinePacks={() => setDialog("packs")}
             />
             <audio ref={audioRef} className="hidden" aria-hidden="true" />
           </div>
@@ -565,6 +589,7 @@ function HeroConsole({ result, verdict }: { result: VerifyResponse | null; verdi
 function VerificationChat({
   claim,
   setClaim,
+  sentClaim,
   language,
   setLanguage,
   result,
@@ -590,9 +615,11 @@ function VerificationChat({
   playExplanation,
   dataSaver,
   setDataSaver,
+  onOpenOfflinePacks,
 }: {
   claim: string;
   setClaim: (value: string) => void;
+  sentClaim: string;
   language: LanguageCode;
   setLanguage: (value: LanguageCode) => void;
   result: VerifyResponse | null;
@@ -618,7 +645,16 @@ function VerificationChat({
   playExplanation: (text: string) => void;
   dataSaver: boolean;
   setDataSaver: (value: boolean) => void;
+  onOpenOfflinePacks: () => void;
 }) {
+  const chatBodyRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = chatBodyRef.current;
+    if (!el) return;
+    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  }, [result, error, notice, isLoading]);
+
   return (
     <section className="chat-shell" aria-label="SatyaSetu verification chat">
       <div className="chat-sidebar">
@@ -637,17 +673,18 @@ function VerificationChat({
           />
           <ChatTool icon={Languages} label="Translate reply" />
           <ChatTool icon={Cloud} label={`${t("dashboard.syncNow")}${pendingCount ? ` (${pendingCount})` : ""}`} />
+          <ChatTool icon={PackageCheck} label="Offline packs" onClick={onOpenOfflinePacks} />
         </div>
         <div className="sidebar-card">
             <div className="text-sm font-black text-white">{apiOnline ? "Backend connected" : "Backend offline"}</div>
-            <p className="mt-2 text-xs leading-5 text-slate-300">
+            <p className="mt-2 text-xs leading-5 text-slate-500">
               {sources.length ? `${sources.length} trusted sources loaded from FastAPI.` : "Start FastAPI on port 8001 for live evidence."}
             </p>
             {connectivity !== "online" ? (
               <p className="mt-2 text-xs leading-5 text-amber-300">{t(`connectivity.${connectivity}`)}</p>
             ) : null}
             {pendingCount > 0 ? (
-              <p className="mt-2 text-xs leading-5 text-cyan-200">{pendingCount} queued for sync</p>
+              <p className="mt-2 text-xs leading-5 text-teal-700">{pendingCount} queued for sync</p>
             ) : null}
           </div>
           <label className="sidebar-toggle">
@@ -673,7 +710,7 @@ function VerificationChat({
           </div>
         </div>
 
-        <div className="chat-body">
+        <div className="chat-body" ref={chatBodyRef}>
           <div className="assistant-message">
             <div className="avatar assistant-avatar"><ShieldCheck size={18} /></div>
             <div className="message-card">
@@ -691,7 +728,7 @@ function VerificationChat({
 
           <div className="user-message">
             <div className="message-card user-card">
-              <p>{claim}</p>
+              <p>{sentClaim}</p>
             </div>
             <div className="avatar user-avatar">You</div>
           </div>
@@ -795,7 +832,17 @@ function VerificationChat({
           >
             {isTranscribing ? <Loader2 className="animate-spin" size={18} /> : <Mic size={18} />}
           </button>
-          <textarea value={claim} onChange={(event) => setClaim(event.target.value)} placeholder={t("verify.placeholder")} />
+          <textarea
+            value={claim}
+            onChange={(event) => setClaim(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                if (!isLoading && claim.trim().length >= 3) verifyClaim();
+              }
+            }}
+            placeholder={t("verify.placeholder")}
+          />
           <button className="send-button" onClick={verifyClaim} disabled={isLoading} aria-label="Send claim">
             {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
           </button>
