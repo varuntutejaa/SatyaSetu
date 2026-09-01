@@ -31,8 +31,8 @@ class Settings(BaseSettings):
     whatsapp_app_secret: str = ""
     whatsapp_api_version: str = "v21.0"
 
-    # Twilio Programmable Voice. The Auth Token is used only to validate
-    # signed webhooks; it is never returned to a client.
+    # Twilio Programmable Voice (IVR) and WhatsApp Sandbox. The Auth Token
+    # is used only to validate signed webhooks; it is never returned to a client.
     twilio_account_sid: str = ""
     twilio_auth_token: str = ""
     twilio_phone_number: str = ""

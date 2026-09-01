@@ -1,13 +1,13 @@
 "use client";
 
 import {
+  AudioLines,
   Check,
   Copy,
   Download,
   Loader2,
   MessageCircleMore,
   Mic,
-  PhoneCall,
   QrCode,
   ReceiptText,
   RefreshCw,
@@ -39,7 +39,7 @@ type WinnerFeaturesProps = {
   onPickScreenshot: () => void;
   onToggleRecording: () => void;
   onTogglePack: (packId: string) => void;
-  onScrollToAssistant: () => void;
+  onOpenAssistant: () => void;
 };
 
 export function WinnerFeatures({
@@ -54,8 +54,63 @@ export function WinnerFeatures({
   onPickScreenshot,
   onToggleRecording,
   onTogglePack,
-  onScrollToAssistant,
+  onOpenAssistant,
 }: WinnerFeaturesProps) {
+  return (
+    <>
+      <section className="winner-launchpad" aria-label="Fast verification tools">
+        <button type="button" className="winner-action winner-action-primary" onClick={() => setDialog("forward")}>
+          <span className="winner-action-icon"><MessageCircleMore size={22} /></span>
+          <span><strong>WhatsApp</strong><small>Forward a scheme message, screenshot or voice note</small></span>
+          <span className="winner-arrow">01</span>
+        </button>
+        <button type="button" className="winner-action winner-action-call" onClick={() => setDialog("ivr")}>
+          <span className="winner-action-icon"><AudioLines size={22} /></span>
+          <span><strong>Instant Voice Agent</strong><small>Ask about a government scheme in your language, voice to voice</small></span>
+          <span className="winner-arrow">AI</span>
+        </button>
+        <button type="button" className="winner-action" onClick={onOpenAssistant}>
+          <span className="winner-action-icon"><ShieldCheck size={22} /></span>
+          <span><strong>SatyaSetu AI Assistant</strong><small>Type or speak a scheme claim right here on the page</small></span>
+          <span className="winner-arrow">02</span>
+        </button>
+        <button type="button" className="winner-action" onClick={() => setDialog("receipt")} disabled={!result}>
+          <span className="winner-action-icon"><ReceiptText size={22} /></span>
+          <span><strong>Evidence Receipt</strong><small>{result ? "Listen, copy or share the correction" : "Available after verification"}</small></span>
+          <span className="winner-arrow">03</span>
+        </button>
+      </section>
+
+      <FeatureDialogs
+        claim={claim}
+        result={result}
+        installedPackIds={installedPackIds}
+        isLoading={isLoading}
+        recorderState={recorderState}
+        dialog={dialog}
+        setDialog={setDialog}
+        onVerifyForward={onVerifyForward}
+        onPickScreenshot={onPickScreenshot}
+        onToggleRecording={onToggleRecording}
+        onTogglePack={onTogglePack}
+      />
+    </>
+  );
+}
+
+export function FeatureDialogs({
+  claim,
+  result,
+  installedPackIds,
+  isLoading,
+  recorderState,
+  dialog,
+  setDialog,
+  onVerifyForward,
+  onPickScreenshot,
+  onToggleRecording,
+  onTogglePack,
+}: Omit<WinnerFeaturesProps, "onOpenAssistant">) {
   const [forwardText, setForwardText] = useState(claim);
 
   useEffect(() => {
@@ -81,29 +136,6 @@ export function WinnerFeatures({
 
   return (
     <>
-      <section className="winner-launchpad" aria-label="Fast verification tools">
-        <button type="button" className="winner-action winner-action-primary" onClick={() => setDialog("forward")}>
-          <span className="winner-action-icon"><MessageCircleMore size={22} /></span>
-          <span><strong>WhatsApp</strong><small>Forward a message, screenshot or voice note</small></span>
-          <span className="winner-arrow">01</span>
-        </button>
-        <button type="button" className="winner-action winner-action-call" onClick={() => setDialog("ivr")}>
-          <span className="winner-action-icon"><PhoneCall size={22} /></span>
-          <span><strong>Instant Voice</strong><small>Call the Sarvam-language voice helpline</small></span>
-          <span className="winner-arrow">IVR</span>
-        </button>
-        <button type="button" className="winner-action" onClick={onScrollToAssistant}>
-          <span className="winner-action-icon"><ShieldCheck size={22} /></span>
-          <span><strong>SatyaSetu AI Assistant</strong><small>Type or speak a claim right here on the page</small></span>
-          <span className="winner-arrow">02</span>
-        </button>
-        <button type="button" className="winner-action" onClick={() => setDialog("receipt")} disabled={!result}>
-          <span className="winner-action-icon"><ReceiptText size={22} /></span>
-          <span><strong>Evidence Receipt</strong><small>{result ? "Listen, copy or share the correction" : "Available after verification"}</small></span>
-          <span className="winner-arrow">03</span>
-        </button>
-      </section>
-
       {dialog === "forward" ? (
         <Dialog title="Forward to SatyaSetu" subtitle="Check it before you trust it or send it on." onClose={() => setDialog(null)}>
           <div className="channel-badge"><MessageCircleMore size={16} /> WhatsApp-ready verification</div>
@@ -138,29 +170,7 @@ export function WinnerFeatures({
       ) : null}
 
       {dialog === "packs" ? (
-        <Dialog title="Offline trust packs" subtitle="Save small, official-information packs for weak or unavailable internet." onClose={() => setDialog(null)} wide>
-          <div className="offline-banner"><WifiOff size={18} /><span><strong>Works without a connection</strong>Installed packs are checked on this device and always display their update date.</span></div>
-          <div className="pack-grid">
-            {OFFLINE_PACKS.map((pack) => {
-              const installed = installedPackIds.includes(pack.id);
-              return (
-                <article className={`pack-card ${installed ? "pack-card-installed" : ""}`} key={pack.id}>
-                  <div className="pack-card-top">
-                    <span className="pack-icon">{installed ? <Check size={20} /> : <Download size={20} />}</span>
-                    <span className="pack-size">{pack.size}</span>
-                  </div>
-                  <h3>{pack.title}</h3>
-                  <p>{pack.description}</p>
-                  <div className="pack-meta">{pack.sourceCount} official sources · Updated {pack.updatedAt}</div>
-                  <button onClick={() => onTogglePack(pack.id)}>
-                    {installed ? <><RefreshCw size={16} /> Saved on device</> : <><Download size={16} /> Download pack</>}
-                  </button>
-                </article>
-              );
-            })}
-          </div>
-          <p className="pack-disclaimer">Offline packs never silently claim to be live. SatyaSetu shows the saved date and asks users to reconnect for recent changes.</p>
-        </Dialog>
+        <OfflinePacksDialog installedPackIds={installedPackIds} onTogglePack={onTogglePack} onClose={() => setDialog(null)} />
       ) : null}
 
       {dialog === "receipt" && result ? <ReceiptDialog result={result} onClose={() => setDialog(null)} /> : null}
@@ -173,6 +183,42 @@ export function WinnerFeatures({
         onVerify={onVerifyForward}
       />
     </>
+  );
+}
+
+export function OfflinePacksDialog({
+  installedPackIds,
+  onTogglePack,
+  onClose,
+}: {
+  installedPackIds: string[];
+  onTogglePack: (packId: string) => void;
+  onClose: () => void;
+}) {
+  return (
+    <Dialog title="Offline trust packs" subtitle="Save small, official-information packs for weak or unavailable internet." onClose={onClose} wide>
+      <div className="offline-banner"><WifiOff size={18} /><span><strong>Works without a connection</strong>Installed packs are checked on this device and always display their update date.</span></div>
+      <div className="pack-grid">
+        {OFFLINE_PACKS.map((pack) => {
+          const installed = installedPackIds.includes(pack.id);
+          return (
+            <article className={`pack-card ${installed ? "pack-card-installed" : ""}`} key={pack.id}>
+              <div className="pack-card-top">
+                <span className="pack-icon">{installed ? <Check size={20} /> : <Download size={20} />}</span>
+                <span className="pack-size">{pack.size}</span>
+              </div>
+              <h3>{pack.title}</h3>
+              <p>{pack.description}</p>
+              <div className="pack-meta">{pack.sourceCount} official sources · Updated {pack.updatedAt}</div>
+              <button onClick={() => onTogglePack(pack.id)}>
+                {installed ? <><RefreshCw size={16} /> Saved on device</> : <><Download size={16} /> Download pack</>}
+              </button>
+            </article>
+          );
+        })}
+      </div>
+      <p className="pack-disclaimer">Offline packs never silently claim to be live. SatyaSetu shows the saved date and asks users to reconnect for recent changes.</p>
+    </Dialog>
   );
 }
 

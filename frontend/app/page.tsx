@@ -11,73 +11,31 @@ import {
   Database,
   FileSearch,
   Fingerprint,
-  Globe2,
-  Languages,
   Landmark,
+  Languages,
   Loader2,
   LockKeyhole,
   Mic,
-  PackageCheck,
   PhoneCall,
-  Radio,
   ScanText,
-  Send,
   ShieldCheck,
   Sparkles,
   SquareIcon,
-  Upload,
   Users,
   Volume2,
-  Wifi,
-  WifiOff,
   Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
-import type { RefObject } from "react";
-import {
-  getDemoClaims,
-  getHealth,
-  getSources,
-  speechToText,
-  submitReport,
-  textToSpeech,
-  verifyClaim as verifyClaimRequest,
-  verifyImage,
-} from "@/services/api";
-import type { SourceOut, VerifyResponse } from "@/services/api";
-import { useLanguage, SUPPORTED_LANGUAGES } from "@/lib/i18n";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import type { LanguageCode } from "@/lib/i18n";
-import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { useSyncQueue } from "@/hooks/useSyncQueue";
-import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
-import { compressImage } from "@/lib/imageCompress";
-import { cacheSources, cacheVerification, getCachedVerification, getSetting, setSetting } from "@/lib/db";
-import { matchOfflinePack } from "@/lib/offlinePacks";
+import type { VerifyResponse } from "@/services/api";
 import { WinnerFeatures } from "@/components/WinnerFeatures";
-import type { FeatureDialog } from "@/components/WinnerFeatures";
-
-const fallbackClaims = [
-  "PM-KISAN gives eligible farmer families Rs 6,000 per year in three installments.",
-  "RBI asks citizens to share OTPs with bank officials for account verification.",
-  "Aadhaar is mandatory for every school admission in India.",
-  "Report cyber fraud quickly through the national cybercrime portal or helpline 1930.",
-];
+import { ConnectivityIndicator } from "@/components/ConnectivityIndicator";
+import { useAssistantState } from "@/hooks/useAssistantState";
 
 const languages = SUPPORTED_LANGUAGES.map(({ code, label }) => [code, label] as [string, string]);
-
-const verdictStyles: Record<string, { label: string; className: string; color: string }> = {
-  VERIFIED: { label: "Verified", className: "verdict-verified", color: "text-emerald-700" },
-  CONTRADICTED: { label: "Contradicted", className: "verdict-contradicted", color: "text-rose-700" },
-  UNVERIFIED: { label: "Needs Evidence", className: "verdict-unverified", color: "text-amber-700" },
-};
-
-const operatingStats = [
-  ["12+", "official registries ready"],
-  ["8", "language surfaces"],
-  ["0", "LLM verdict control"],
-  ["<3s", "demo response target"],
-];
 
 const flowSteps = [
   { icon: ScanText, title: "Capture", text: "Voice, screenshot, pasted forward, kiosk entry, or field worker submission enters one queue." },
@@ -94,223 +52,64 @@ const channels = [
 ];
 
 export default function Home() {
-  const { language, setLanguage, t } = useLanguage();
-  const connectivity = useOnlineStatus();
-  const { pendingCount, enqueue, isSyncing } = useSyncQueue();
-  const recorder = useVoiceRecorder();
+  const router = useRouter();
+  const {
+    language,
+    setLanguage,
+    t,
+    connectivity,
+    pendingCount,
+    isSyncing,
+    recorder,
+    claim,
+    setClaim,
+    demoClaims,
+    result,
+    isLoading,
+    isTranscribing,
+    isSpeaking,
+    installedPackIds,
+    dialog,
+    setDialog,
+    error,
+    notice,
+    fileInputRef,
+    audioRef,
+    verdict,
+    verifyClaim,
+    verifyForwardedClaim,
+    toggleOfflinePack,
+    verifyScreenshot,
+    toggleRecording,
+    playExplanation,
+  } = useAssistantState();
 
-  const [claim, setClaim] = useState(fallbackClaims[0]);
-  const [sentClaim, setSentClaim] = useState(fallbackClaims[0]);
-  const [demoClaims, setDemoClaims] = useState<string[]>(fallbackClaims);
-  const [result, setResult] = useState<VerifyResponse | null>(null);
-  const [sources, setSources] = useState<SourceOut[]>([]);
-  const [apiOnline, setApiOnline] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isReporting, setIsReporting] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [dataSaver, setDataSaver] = useState(false);
-  const [installedPackIds, setInstalledPackIds] = useState<string[]>([]);
-  const [dialog, setDialog] = useState<FeatureDialog>(null);
-  const [error, setError] = useState("");
-  const [notice, setNotice] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const audioRef = useRef<HTMLAudioElement>(null);
-
-  useEffect(() => {
-    getDemoClaims()
-      .then((data) => {
-        const claims = data.map((item) => item.claim).filter(Boolean);
-        if (claims.length) setDemoClaims(claims.slice(0, 4));
-      })
-      .catch(() => setDemoClaims(fallbackClaims));
-
-    getHealth()
-      .then(() => setApiOnline(true))
-      .catch(() => setApiOnline(false));
-
-    getSources()
-      .then((data) => {
-        setSources(data);
-        cacheSources(data).catch(() => {});
-      })
-      .catch(() => setSources([]));
-
-    getSetting("dataSaver", false).then(setDataSaver).catch(() => {});
-    getSetting<string[]>("installedOfflinePacks", []).then(setInstalledPackIds).catch(() => {});
-  }, []);
+  const [showLaunchpad, setShowLaunchpad] = useState(false);
 
   useEffect(() => {
-    setSetting("dataSaver", dataSaver).catch(() => {});
-  }, [dataSaver]);
-
-  const verdict = useMemo(() => {
-    if (!result) return null;
-    return verdictStyles[result.verdict] ?? verdictStyles.UNVERIFIED;
-  }, [result]);
-
-  async function runVerification(input: string) {
-    const claimText = input.trim();
-    if (claimText.length < 3) return null;
-    setError("");
-    setNotice("");
-    setSentClaim(claimText);
-    setClaim("");
-
-    if (connectivity === "offline") {
-      const cached = await getCachedVerification(claimText);
-      if (cached) {
-        // Never present cached data as live — the spec is explicit about this.
-        setResult({ ...cached.result, offline: true });
-        setNotice(t("offline.lastUpdate", { date: new Date(cached.cachedAt).toLocaleString() }));
-        return { ...cached.result, offline: true };
-      } else {
-        const packResult = matchOfflinePack(claimText, installedPackIds, language);
-        if (packResult) {
-          setResult(packResult);
-          setNotice("Verified on this device with a downloaded trust pack. Check the saved update date before acting.");
-          cacheVerification(claimText, language, packResult).catch(() => {});
-          return packResult;
-        }
-        await enqueue(claimText, language);
-        setResult(null);
-        setNotice(t("offline.queued"));
-      }
-      return null;
+    if (showLaunchpad) {
+      document.getElementById("launchpad")?.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  }, [showLaunchpad]);
 
-    setIsLoading(true);
-    try {
-      const response = await verifyClaimRequest(claimText, language);
-      setResult(response);
-      setApiOnline(true);
-      cacheVerification(claimText, language, response).catch(() => {});
-      return response;
-    } catch (err) {
-      setApiOnline(false);
-      const packResult = matchOfflinePack(claimText, installedPackIds, language);
-      if (packResult) {
-        setResult(packResult);
-        setNotice("The live service is unavailable, so SatyaSetu used a downloaded trust pack and marked the result offline.");
-        cacheVerification(claimText, language, packResult).catch(() => {});
-        return packResult;
-      } else {
-        setError(err instanceof Error ? err.message : t("errors.aiUnavailable"));
-        return null;
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function verifyClaim() {
-    await runVerification(claim);
-  }
-
-  async function verifyForwardedClaim(text: string) {
-    setClaim(text);
-    return runVerification(text);
-  }
-
-  function scrollToAssistant() {
+  function revealLaunchpad() {
     setDialog(null);
-    document.getElementById("assistant")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    if (showLaunchpad) {
+      document.getElementById("launchpad")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      setShowLaunchpad(true);
+    }
+  }
+
+  function openAssistant() {
+    router.push("/assistant");
   }
 
   function openEvidenceReceipt() {
     if (result) {
       setDialog("receipt");
     } else {
-      scrollToAssistant();
-    }
-  }
-
-  function toggleOfflinePack(packId: string) {
-    setInstalledPackIds((current) => {
-      const next = current.includes(packId) ? current.filter((id) => id !== packId) : [...current, packId];
-      setSetting("installedOfflinePacks", next).catch(() => {});
-      return next;
-    });
-  }
-
-  async function verifyScreenshot(file: File) {
-    setIsLoading(true);
-    setError("");
-    setNotice(t("verify.compressing"));
-    try {
-      const optimized = await compressImage(file);
-      setNotice(`Reading ${optimized.name} with backend OCR...`);
-      const response = await verifyImage(optimized);
-      setResult(response);
-      setClaim(response.claim);
-      setSentClaim(response.claim);
-      setApiOnline(true);
-      setNotice("Screenshot read and verified.");
-      cacheVerification(response.claim, language, response).catch(() => {});
-    } catch (err) {
-      setApiOnline(false);
-      setError(err instanceof Error ? err.message : t("errors.ocrUnavailable"));
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function toggleRecording() {
-    setError("");
-    if (recorder.state === "recording") {
-      const blob = await recorder.stop();
-      if (!blob) return;
-      setIsTranscribing(true);
-      setNotice(t("verify.listening"));
-      try {
-        const transcription = await speechToText(blob, language);
-        setClaim(transcription.text);
-        setNotice("");
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t("errors.voiceUnavailable"));
-      } finally {
-        setIsTranscribing(false);
-      }
-      return;
-    }
-    await recorder.start();
-    if (recorder.error) setError(recorder.error);
-  }
-
-  async function playExplanation(text: string) {
-    setError("");
-    if (isSpeaking) {
-      audioRef.current?.pause();
-      setIsSpeaking(false);
-      return;
-    }
-    try {
-      const speech = await textToSpeech(text, language);
-      if (audioRef.current) {
-        audioRef.current.src = `data:${speech.mime_type};base64,${speech.audio_base64}`;
-        audioRef.current.onended = () => setIsSpeaking(false);
-        await audioRef.current.play();
-        setIsSpeaking(true);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("errors.voiceUnavailable"));
-    }
-  }
-
-  async function reportClaim() {
-    if (claim.trim().length < 3) return;
-    setIsReporting(true);
-    setError("");
-    setNotice("");
-    try {
-      const response = await submitReport(claim.trim());
-      setNotice(`${response.message} Total reports for this claim: ${response.total_reports_for_claim}.`);
-      setApiOnline(true);
-    } catch (err) {
-      setApiOnline(false);
-      setError(err instanceof Error ? err.message : "Could not submit report.");
-    } finally {
-      setIsReporting(false);
+      openAssistant();
     }
   }
 
@@ -327,8 +126,8 @@ export default function Home() {
           </a>
           <nav className="hidden items-center gap-7 text-sm font-bold text-cyan-50/78 lg:flex">
             <button type="button" className="nav-link" onClick={() => setDialog("forward")}>WhatsApp</button>
-            <button type="button" className="nav-link" onClick={() => setDialog("ivr")}>Instant Voice</button>
-            <a className="nav-link" href="#assistant">AI Assistant</a>
+            <button type="button" className="nav-link" onClick={() => setDialog("ivr")}>Voice Agent</button>
+            <button type="button" className="nav-link" onClick={openAssistant}>AI Assistant</button>
             <button type="button" className="nav-link" onClick={openEvidenceReceipt}>Evidence Receipt</button>
           </nav>
           <div className="flex items-center gap-3">
@@ -339,85 +138,55 @@ export default function Home() {
 
       <section id="top" className="hero-stage">
         <div className="hero-mesh" />
-        <div className="relative z-10 mx-auto max-w-7xl px-4 pb-14 pt-10 sm:px-6 lg:px-8 lg:pb-20 lg:pt-16">
-          <div className="mx-auto flex max-w-5xl flex-col items-center text-center">
-            <div className="mb-5 flex flex-wrap gap-2">
-              <span className="premium-pill"><Landmark size={14} /> GovTech verification OS</span>
-              <span className="premium-pill"><Radio size={14} /> Built for crisis velocity</span>
+        <div className="relative z-10 mx-auto max-w-7xl px-4 pb-6 pt-5 sm:px-6 sm:pb-14 sm:pt-10 lg:px-8 lg:pb-20 lg:pt-16">
+          <div className="hero-split">
+            <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
+              <span className="premium-pill hero-kicker"><Landmark size={14} /> Government Scheme Verification</span>
+              <h1 className="hero-title hero-title-scheme">
+                Verify Any Government Scheme.<br />Trust the Official Source.
+              </h1>
+              <p className="hero-subheadline">
+                Check government scheme messages, eligibility claims, benefits, deadlines, and
+                application information against verified official sources.
+              </p>
+              <div className="hero-trust-row lg:justify-start">
+                <span><Landmark size={14} /> Government schemes</span>
+                <span><ShieldCheck size={14} /> Official sources</span>
+                <span><Fingerprint size={14} /> Evidence-backed</span>
+                <span><Mic size={14} /> Voice + regional languages</span>
+              </div>
+              <div className="mt-4 flex flex-col gap-3 sm:mt-6 sm:flex-row">
+                <button type="button" className="hero-primary" onClick={revealLaunchpad}>Verify a Scheme <ArrowRight size={18} /></button>
+              </div>
             </div>
-            <h1 className="hero-title">SatyaSetu</h1>
-            <ul className="hero-points">
-              <li><CheckCircle2 size={18} /> Checks messages, screenshots, and voice notes against real government, health, and financial sources</li>
-              <li><CheckCircle2 size={18} /> Works in your language — on WhatsApp, by phone, or right here</li>
-              <li><CheckCircle2 size={18} /> Every answer comes with the evidence behind it, never just an AI's word</li>
-            </ul>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a className="hero-primary" href="#assistant">Verify a claim <ArrowRight size={18} /></a>
-            </div>
+
+            <HeroExample />
           </div>
 
-          <div className="mx-auto mt-10 max-w-5xl">
-            <WinnerFeatures
-              claim={claim}
-              result={result}
-              installedPackIds={installedPackIds}
-              isLoading={isLoading}
-              recorderState={recorder.state}
-              dialog={dialog}
-              setDialog={setDialog}
-              onVerifyForward={verifyForwardedClaim}
-              onPickScreenshot={() => fileInputRef.current?.click()}
-              onToggleRecording={toggleRecording}
-              onTogglePack={toggleOfflinePack}
-              onScrollToAssistant={scrollToAssistant}
-            />
+          <div id="launchpad" className={showLaunchpad ? "mx-auto mt-10 max-w-5xl scroll-mt-24" : "scroll-mt-24"}>
+          {showLaunchpad ? (
+            <>
+              <p className="hero-access-heading">One government-scheme verification service — however you reach it:</p>
+              <div className="mx-auto mt-3 max-w-5xl">
+                <WinnerFeatures
+                  claim={claim}
+                  result={result}
+                  installedPackIds={installedPackIds}
+                  isLoading={isLoading}
+                  recorderState={recorder.state}
+                  dialog={dialog}
+                  setDialog={setDialog}
+                  onVerifyForward={verifyForwardedClaim}
+                  onPickScreenshot={() => fileInputRef.current?.click()}
+                  onToggleRecording={toggleRecording}
+                  onTogglePack={toggleOfflinePack}
+                  onOpenAssistant={openAssistant}
+                />
+              </div>
+            </>
+          ) : null}
           </div>
-
-          <div id="assistant" className="mx-auto mt-5 max-w-5xl scroll-mt-24">
-            <VerificationChat
-              claim={claim}
-              setClaim={setClaim}
-              sentClaim={sentClaim}
-              language={language}
-              setLanguage={setLanguage}
-              result={result}
-              verdict={verdict}
-              sources={sources}
-              apiOnline={apiOnline}
-              isLoading={isLoading}
-              isReporting={isReporting}
-              error={error}
-              notice={notice}
-              verifyClaim={verifyClaim}
-              reportClaim={reportClaim}
-              fileInputRef={fileInputRef}
-              verifyScreenshot={verifyScreenshot}
-              demoClaims={demoClaims}
-              t={t}
-              connectivity={connectivity}
-              pendingCount={pendingCount}
-              recorderState={recorder.state}
-              isTranscribing={isTranscribing}
-              isSpeaking={isSpeaking}
-              toggleRecording={toggleRecording}
-              playExplanation={playExplanation}
-              dataSaver={dataSaver}
-              setDataSaver={setDataSaver}
-              onOpenOfflinePacks={() => setDialog("packs")}
-            />
-            <audio ref={audioRef} className="hidden" aria-hidden="true" />
-          </div>
-
-          <div className="mx-auto mt-8 max-w-5xl">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {operatingStats.map(([value, label]) => (
-                <div className="glass-stat" key={label}>
-                  <div className="text-2xl font-black text-white">{value}</div>
-                  <div className="mt-1 text-xs font-bold leading-4 text-slate-300">{label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <audio ref={audioRef} className="hidden" aria-hidden="true" />
         </div>
       </section>
 
@@ -554,6 +323,28 @@ export default function Home() {
   );
 }
 
+function HeroExample() {
+  return (
+    <div className="hero-example">
+      <div className="hero-example-top">
+        <span className="hero-example-label">Example verification</span>
+        <span className="hero-example-verdict"><BadgeCheck size={16} /> VERIFIED</span>
+      </div>
+      <p className="hero-example-claim">
+        "PM-KISAN is giving ₹6,000 to every eligible farmer family. Is this true?"
+      </p>
+      <p className="hero-example-explanation">
+        Official source confirms: PM-KISAN gives eligible small and marginal farmer families
+        ₹6,000 per year — matching the claim.
+      </p>
+      <div className="hero-example-source">
+        <ShieldCheck size={15} />
+        <span>PM-KISAN — Ministry of Agriculture &amp; Farmers Welfare <em>(pmkisan.gov.in)</em></span>
+      </div>
+    </div>
+  );
+}
+
 function HeroConsole({ result, verdict }: { result: VerifyResponse | null; verdict: { label: string; color: string } | null }) {
   return (
     <div className="hero-console">
@@ -582,312 +373,6 @@ function HeroConsole({ result, verdict }: { result: VerifyResponse | null; verdi
         </div>
       </div>
     </div>
-  );
-}
-
-function VerificationChat({
-  claim,
-  setClaim,
-  sentClaim,
-  language,
-  setLanguage,
-  result,
-  verdict,
-  sources,
-  apiOnline,
-  isLoading,
-  isReporting,
-  error,
-  notice,
-  verifyClaim,
-  reportClaim,
-  fileInputRef,
-  verifyScreenshot,
-  demoClaims,
-  t,
-  connectivity,
-  pendingCount,
-  recorderState,
-  isTranscribing,
-  isSpeaking,
-  toggleRecording,
-  playExplanation,
-  dataSaver,
-  setDataSaver,
-  onOpenOfflinePacks,
-}: {
-  claim: string;
-  setClaim: (value: string) => void;
-  sentClaim: string;
-  language: LanguageCode;
-  setLanguage: (value: LanguageCode) => void;
-  result: VerifyResponse | null;
-  verdict: { label: string; color: string } | null;
-  sources: SourceOut[];
-  apiOnline: boolean;
-  isLoading: boolean;
-  isReporting: boolean;
-  error: string;
-  notice: string;
-  verifyClaim: () => void;
-  reportClaim: () => void;
-  fileInputRef: RefObject<HTMLInputElement>;
-  verifyScreenshot: (file: File) => void;
-  demoClaims: string[];
-  t: (key: string, vars?: Record<string, string | number>) => string;
-  connectivity: "online" | "weak" | "offline";
-  pendingCount: number;
-  recorderState: "idle" | "recording" | "processing";
-  isTranscribing: boolean;
-  isSpeaking: boolean;
-  toggleRecording: () => void;
-  playExplanation: (text: string) => void;
-  dataSaver: boolean;
-  setDataSaver: (value: boolean) => void;
-  onOpenOfflinePacks: () => void;
-}) {
-  const chatBodyRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const el = chatBodyRef.current;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [result, error, notice, isLoading]);
-
-  return (
-    <section className="chat-shell" aria-label="SatyaSetu verification chat">
-      <div className="chat-sidebar">
-        <div>
-          <div className="text-xs font-black uppercase text-cyan-200/80">Workspace</div>
-          <h2 className="mt-2 text-xl font-black text-white">Citizen Trust Desk</h2>
-        </div>
-        <div className="chat-tool-list">
-          <ChatTool icon={FileSearch} label="Verify claim" active onClick={verifyClaim} />
-          <ChatTool icon={Upload} label="Read screenshot" onClick={() => fileInputRef.current?.click()} />
-          <ChatTool
-            icon={Mic}
-            label={recorderState === "recording" ? t("verify.listening") : t("home.speak")}
-            active={recorderState === "recording"}
-            onClick={toggleRecording}
-          />
-          <ChatTool icon={Cloud} label={`${t("dashboard.syncNow")}${pendingCount ? ` (${pendingCount})` : ""}`} />
-          <ChatTool icon={PackageCheck} label="Offline packs" onClick={onOpenOfflinePacks} />
-        </div>
-        <div className="sidebar-card">
-            <div className="text-sm font-black text-white">{apiOnline ? "Backend connected" : "Backend offline"}</div>
-            <p className="mt-2 text-xs leading-5 text-slate-500">
-              {sources.length ? `${sources.length} trusted sources loaded from FastAPI.` : "Start FastAPI on port 8001 for live evidence."}
-            </p>
-            {connectivity !== "online" ? (
-              <p className="mt-2 text-xs leading-5 text-amber-300">{t(`connectivity.${connectivity}`)}</p>
-            ) : null}
-            {pendingCount > 0 ? (
-              <p className="mt-2 text-xs leading-5 text-teal-700">{pendingCount} queued for sync</p>
-            ) : null}
-          </div>
-          <label className="sidebar-toggle">
-            <span>{t("dashboard.dataSaver")}</span>
-            <input type="checkbox" checked={dataSaver} onChange={(event) => setDataSaver(event.target.checked)} />
-          </label>
-        </div>
-
-      <div className="chat-main">
-        <div className="chat-header">
-          <div>
-            <div className="text-sm font-black text-slate-950">SatyaSetu Assistant</div>
-            <div className="text-xs font-bold text-slate-500">Evidence-backed answers for schemes, fraud, health, and public alerts</div>
-          </div>
-          <div className="flex items-center gap-2">
-            <select className="chat-select" value={language} onChange={(event) => setLanguage(event.target.value as LanguageCode)} aria-label="Chat language">
-              {languages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-            </select>
-            <span className={apiOnline && connectivity !== "offline" ? "chat-live" : "chat-offline"}>
-              {connectivity === "offline" ? <WifiOff size={13} /> : <Zap size={13} />}
-              {connectivity === "offline" ? t("connectivity.offline") : apiOnline ? "API live" : "API offline"}
-            </span>
-          </div>
-        </div>
-
-        <div className="chat-body" ref={chatBodyRef}>
-          <div className="assistant-message">
-            <div className="avatar assistant-avatar"><ShieldCheck size={18} /></div>
-            <div className="message-card">
-              <p className="message-kicker">How can I help?</p>
-              <p>
-                Paste a forward, upload a screenshot, speak a claim, or ask for a simple explanation. I will verify it against official evidence and show my sources.
-              </p>
-              <div className="action-grid">
-                {["Check if a scheme message is real", "Explain this in simple Hindi", "Find official source links", "Create a field-worker response"].map((item) => (
-                  <button className="action-chip" key={item} onClick={() => setClaim(item)}>{item}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="user-message">
-            <div className="message-card user-card">
-              <p>{sentClaim}</p>
-            </div>
-            <div className="avatar user-avatar">You</div>
-          </div>
-
-          {isLoading ? (
-            <div className="assistant-message">
-              <div className="avatar assistant-avatar"><Loader2 className="animate-spin" size={18} /></div>
-              <div className="message-card">
-                <p className="message-kicker">Checking trusted sources</p>
-                <div className="loading-steps">
-                  <span /> Retrieve evidence
-                  <span /> Compare claim
-                  <span /> Build verdict
-                </div>
-              </div>
-            </div>
-          ) : null}
-
-          {error ? (
-            <div className="assistant-message">
-              <div className="avatar warn-avatar"><AlertCircle size={18} /></div>
-              <div className="message-card warning-card">{error}</div>
-            </div>
-          ) : null}
-
-          {notice ? (
-            <div className="assistant-message">
-              <div className="avatar assistant-avatar"><CheckCircle2 size={18} /></div>
-              <div className="message-card result-message">{notice}</div>
-            </div>
-          ) : null}
-
-          {result && verdict ? (
-            <div className="assistant-message">
-              <div className="avatar assistant-avatar"><BadgeCheck size={18} /></div>
-              <div className="message-card result-message">
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                  <span className={`verdict-badge ${verdict.color}`}>{verdict.label}</span>
-                  <span className="status-pill">{result.confidence} {t("verdict.confidence")}</span>
-                  <span className="status-pill">{result.sourceCount} sources</span>
-                  {result.offline ? <span className="status-pill">{t("connectivity.offline")}</span> : null}
-                  <button className="icon-button icon-button-inline" aria-label={t("verdict.listen")} onClick={() => playExplanation(result.explanation)}>
-                    {isSpeaking ? <SquareIcon size={14} /> : <Volume2 size={14} />}
-                  </button>
-                </div>
-                <h3 className="text-lg font-black text-slate-950">{result.summary}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-700">{result.explanation}</p>
-                {result.confidenceFactors?.length ? (
-                  <ul className="mt-3 grid gap-1">
-                    {result.confidenceFactors.map((factor) => (
-                      <li className="text-xs font-bold text-slate-500" key={factor}>{factor}</li>
-                    ))}
-                  </ul>
-                ) : null}
-                <div className="mt-4 grid gap-2">
-                  {result.evidence.slice(0, 2).map((item) => (
-                    <div className="chat-evidence" key={item.id}>
-                      <div className="text-xs font-black text-teal-700">{item.relationship} · {Math.round(item.relevance_score * 100)}%</div>
-                      <div className="mt-1 text-sm font-black text-slate-950">{item.document_title}</div>
-                      <div className="mt-1 text-xs font-bold text-slate-500">{item.source_name} · {item.source_domain}</div>
-                      {item.document_url ? (
-                        <a className="mt-1 inline-block text-xs font-bold text-teal-700 underline" href={item.document_url} target="_blank" rel="noopener noreferrer">
-                          {t("verdict.viewSource")}
-                        </a>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
-                {result.limitations?.length ? (
-                  <p className="mt-3 text-xs leading-5 text-amber-700">{result.limitations.join(" ")}</p>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-        </div>
-
-        <div className="prompt-row">
-          {demoClaims.slice(0, 3).map((item) => (
-            <button className="prompt-pill" key={item} onClick={() => setClaim(item)}>{item}</button>
-          ))}
-        </div>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/png,image/jpeg,image/webp"
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) verifyScreenshot(file);
-            event.target.value = "";
-          }}
-        />
-        <div className="composer">
-          <button className="composer-icon" aria-label="Attach screenshot" onClick={() => fileInputRef.current?.click()}><Upload size={18} /></button>
-          <button
-            className={`composer-icon ${recorderState === "recording" ? "composer-icon-active" : ""}`}
-            aria-label={t("verify.startRecording")}
-            onClick={toggleRecording}
-            disabled={isTranscribing}
-          >
-            {isTranscribing ? <Loader2 className="animate-spin" size={18} /> : <Mic size={18} />}
-          </button>
-          <textarea
-            value={claim}
-            onChange={(event) => setClaim(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                if (!isLoading && claim.trim().length >= 3) verifyClaim();
-              }
-            }}
-            placeholder={t("verify.placeholder")}
-          />
-          <button className="send-button" onClick={verifyClaim} disabled={isLoading} aria-label="Send claim">
-            {isLoading ? <Loader2 className="animate-spin" size={18} /> : <Send size={18} />}
-          </button>
-        </div>
-        <div className="chat-footer-actions">
-          <button onClick={reportClaim} disabled={isReporting || isLoading}>
-            {isReporting ? <Loader2 className="animate-spin" size={15} /> : <AlertCircle size={15} />}
-            {t("report.suspicious")}
-          </button>
-          <span>{sources.length ? `${sources.length} sources synced` : "Sources load when backend is online"}</span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ConnectivityIndicator({
-  connectivity,
-  t,
-  pendingCount,
-  isSyncing,
-}: {
-  connectivity: "online" | "weak" | "offline";
-  t: (key: string, vars?: Record<string, string | number>) => string;
-  pendingCount: number;
-  isSyncing: boolean;
-}) {
-  const Icon = connectivity === "offline" ? WifiOff : Wifi;
-  const dotClass = connectivity === "online" ? "conn-dot-online" : connectivity === "weak" ? "conn-dot-weak" : "conn-dot-offline";
-  return (
-    <div className="connectivity-indicator" title={t(`connectivity.${connectivity}`)}>
-      <span className={`conn-dot ${dotClass}`} />
-      <Icon size={13} />
-      <span className="hidden sm:inline">{t(`connectivity.${connectivity}`)}</span>
-      {pendingCount > 0 ? (
-        <span className="conn-pending">{isSyncing ? <Loader2 className="animate-spin" size={11} /> : pendingCount}</span>
-      ) : null}
-    </div>
-  );
-}
-
-function ChatTool({ icon: Icon, label, active = false, onClick }: { icon: LucideIcon; label: string; active?: boolean; onClick?: () => void }) {
-  return (
-    <button className={`chat-tool ${active ? "chat-tool-active" : ""}`} onClick={onClick}>
-      <Icon size={17} />
-      {label}
-    </button>
   );
 }
 
