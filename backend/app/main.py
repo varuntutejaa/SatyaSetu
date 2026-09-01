@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import demo, evidence, ocr, reports, sources, stt, sync, translate, tts, verify, whatsapp
+from app.api import demo, evidence, ivr, ocr, reports, sources, stt, sync, translate, tts, verify, whatsapp
 from app.config import get_settings
 from app.database.db import Base, SessionLocal, engine
 from app.database.seed import seed_if_empty
@@ -66,3 +66,4 @@ app.include_router(sync.router)
 app.include_router(reports.router)
 app.include_router(demo.router)
 app.include_router(whatsapp.router)
+app.include_router(ivr.router)

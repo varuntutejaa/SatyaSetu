@@ -8,6 +8,7 @@ import {
   MessageCircleMore,
   Mic,
   PackageCheck,
+  PhoneCall,
   QrCode,
   ReceiptText,
   RefreshCw,
@@ -21,6 +22,7 @@ import {
 import QRCode from "qrcode";
 import { useEffect, useMemo, useState } from "react";
 
+import { IvrSimulator } from "@/components/IvrSimulator";
 import { OFFLINE_PACKS } from "@/lib/offlinePacks";
 import type { VerifyResponse } from "@/services/api";
 
@@ -30,7 +32,7 @@ type WinnerFeaturesProps = {
   installedPackIds: string[];
   isLoading: boolean;
   recorderState: "idle" | "recording" | "processing";
-  onVerifyForward: (text: string) => Promise<void>;
+  onVerifyForward: (text: string) => Promise<VerifyResponse | null>;
   onPickScreenshot: () => void;
   onToggleRecording: () => void;
   onTogglePack: (packId: string) => void;
@@ -47,7 +49,7 @@ export function WinnerFeatures({
   onToggleRecording,
   onTogglePack,
 }: WinnerFeaturesProps) {
-  const [dialog, setDialog] = useState<"forward" | "packs" | "receipt" | null>(null);
+  const [dialog, setDialog] = useState<"ivr" | "forward" | "packs" | "receipt" | null>(null);
   const [forwardText, setForwardText] = useState(claim);
 
   useEffect(() => {
@@ -74,17 +76,22 @@ export function WinnerFeatures({
   return (
     <>
       <section className="winner-launchpad" aria-label="Fast verification tools">
-        <button className="winner-action winner-action-primary" onClick={() => setDialog("forward")}>
+        <button type="button" className="winner-action winner-action-call" onClick={() => setDialog("ivr")}>
+          <span className="winner-action-icon"><PhoneCall size={22} /></span>
+          <span><strong>Call SatyaSetu</strong><small>Try the Sarvam-language voice helpline</small></span>
+          <span className="winner-arrow">IVR</span>
+        </button>
+        <button type="button" className="winner-action winner-action-primary" onClick={() => setDialog("forward")}>
           <span className="winner-action-icon"><MessageCircleMore size={22} /></span>
           <span><strong>Forward a message</strong><small>Paste a WhatsApp forward, voice note or screenshot</small></span>
           <span className="winner-arrow">01</span>
         </button>
-        <button className="winner-action" onClick={() => setDialog("packs")}>
+        <button type="button" className="winner-action" onClick={() => setDialog("packs")}>
           <span className="winner-action-icon"><PackageCheck size={22} /></span>
           <span><strong>Offline trust packs</strong><small>{installedPackIds.length ? `${installedPackIds.length} saved on this phone` : "Verify essentials without internet"}</small></span>
           <span className="winner-arrow">02</span>
         </button>
-        <button className="winner-action" onClick={() => setDialog("receipt")} disabled={!result}>
+        <button type="button" className="winner-action" onClick={() => setDialog("receipt")} disabled={!result}>
           <span className="winner-action-icon"><ReceiptText size={22} /></span>
           <span><strong>Evidence receipt</strong><small>{result ? "Listen, copy or share the correction" : "Available after verification"}</small></span>
           <span className="winner-arrow">03</span>
@@ -151,6 +158,14 @@ export function WinnerFeatures({
       ) : null}
 
       {dialog === "receipt" && result ? <ReceiptDialog result={result} onClose={() => setDialog(null)} /> : null}
+      <IvrSimulator
+        open={dialog === "ivr"}
+        onClose={() => setDialog(null)}
+        claim={claim}
+        recorderState={recorderState}
+        onToggleRecording={onToggleRecording}
+        onVerify={onVerifyForward}
+      />
     </>
   );
 }

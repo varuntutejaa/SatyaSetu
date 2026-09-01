@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     whatsapp_app_secret: str = ""
     whatsapp_api_version: str = "v21.0"
 
+    # Twilio Programmable Voice. The Auth Token is used only to validate
+    # signed webhooks; it is never returned to a client.
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_phone_number: str = ""
+    twilio_public_base_url: str = ""
+    twilio_validate_webhooks: bool = True
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

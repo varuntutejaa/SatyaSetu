@@ -149,7 +149,7 @@ export default function Home() {
 
   async function runVerification(input: string) {
     const claimText = input.trim();
-    if (claimText.length < 3) return;
+    if (claimText.length < 3) return null;
     setError("");
     setNotice("");
 
@@ -159,19 +159,20 @@ export default function Home() {
         // Never present cached data as live — the spec is explicit about this.
         setResult({ ...cached.result, offline: true });
         setNotice(t("offline.lastUpdate", { date: new Date(cached.cachedAt).toLocaleString() }));
+        return { ...cached.result, offline: true };
       } else {
         const packResult = matchOfflinePack(claimText, installedPackIds, language);
         if (packResult) {
           setResult(packResult);
           setNotice("Verified on this device with a downloaded trust pack. Check the saved update date before acting.");
           cacheVerification(claimText, language, packResult).catch(() => {});
-          return;
+          return packResult;
         }
         await enqueue(claimText, language);
         setResult(null);
         setNotice(t("offline.queued"));
       }
-      return;
+      return null;
     }
 
     setIsLoading(true);
@@ -180,6 +181,7 @@ export default function Home() {
       setResult(response);
       setApiOnline(true);
       cacheVerification(claimText, language, response).catch(() => {});
+      return response;
     } catch (err) {
       setApiOnline(false);
       const packResult = matchOfflinePack(claimText, installedPackIds, language);
@@ -187,8 +189,10 @@ export default function Home() {
         setResult(packResult);
         setNotice("The live service is unavailable, so SatyaSetu used a downloaded trust pack and marked the result offline.");
         cacheVerification(claimText, language, packResult).catch(() => {});
+        return packResult;
       } else {
         setError(err instanceof Error ? err.message : t("errors.aiUnavailable"));
+        return null;
       }
     } finally {
       setIsLoading(false);
@@ -201,7 +205,7 @@ export default function Home() {
 
   async function verifyForwardedClaim(text: string) {
     setClaim(text);
-    await runVerification(text);
+    return runVerification(text);
   }
 
   function toggleOfflinePack(packId: string) {

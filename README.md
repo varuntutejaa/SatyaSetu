@@ -69,3 +69,28 @@ of well-established public information for demo purposes, not a live crawl.
   to the frontend or committed to the repo (see `backend/.env.example`).
 - Community reports are signals only; report counts are never used to declare a claim true
   or false.
+
+## Twilio voice helpline (IVR)
+
+SatyaSetu includes a multilingual Twilio Programmable Voice flow for people who
+cannot or do not want to use the web app. A caller chooses from the Sarvam
+Bulbul v3 TTS language set: Hindi, Punjabi, Bengali, Tamil, Telugu, Gujarati,
+Kannada, Malayalam, Marathi, Odia, or Indian English. They speak a claim and
+hear a source-backed verdict. The final verdict still comes from the same
+deterministic verification engine used by the web app.
+
+1. Copy the Twilio variables from `backend/.env.example` into `backend/.env`.
+2. Set `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, and your voice-enabled
+   `TWILIO_PHONE_NUMBER`.
+3. Expose the backend over HTTPS and set `TWILIO_PUBLIC_BASE_URL` to that exact
+   public origin (for example, an HTTPS tunnel during local development).
+4. In the Twilio Console, configure the phone number's **A call comes in**
+   webhook as `POST https://YOUR-HOST/api/ivr/voice`.
+5. Confirm setup at `GET /api/ivr/health`, then call the Twilio number.
+
+Current keypad: 1 Hindi, 2 Punjabi, 3 Bengali, 4 Tamil, 5 Telugu, 6 Gujarati,
+7 Kannada, 8 Malayalam, 9 Marathi, 0 Odia, # English.
+
+Webhook signature validation is enabled by default. It should remain enabled
+outside isolated local tests because the Twilio Auth Token proves that an
+incoming request genuinely came from Twilio.
