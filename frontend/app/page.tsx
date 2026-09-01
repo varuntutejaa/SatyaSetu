@@ -26,13 +26,12 @@ import {
   Zap,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import type { LanguageCode } from "@/lib/i18n";
-import type { VerifyResponse } from "@/services/api";
 import { WinnerFeatures } from "@/components/WinnerFeatures";
-import { ConnectivityIndicator } from "@/components/ConnectivityIndicator";
+import { TopNav } from "@/components/TopNav";
+import { EmptyResult, ResultPanel } from "@/components/ResultPanel";
 import { useAssistantState } from "@/hooks/useAssistantState";
 
 const languages = SUPPORTED_LANGUAGES.map(({ code, label }) => [code, label] as [string, string]);
@@ -52,7 +51,6 @@ const channels = [
 ];
 
 export default function Home() {
-  const router = useRouter();
   const {
     language,
     setLanguage,
@@ -68,18 +66,11 @@ export default function Home() {
     isLoading,
     isTranscribing,
     isSpeaking,
-    installedPackIds,
-    dialog,
-    setDialog,
     error,
     notice,
-    fileInputRef,
     audioRef,
     verdict,
     verifyClaim,
-    verifyForwardedClaim,
-    toggleOfflinePack,
-    verifyScreenshot,
     toggleRecording,
     playExplanation,
   } = useAssistantState();
@@ -93,7 +84,6 @@ export default function Home() {
   }, [showLaunchpad]);
 
   function revealLaunchpad() {
-    setDialog(null);
     if (showLaunchpad) {
       document.getElementById("launchpad")?.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
@@ -101,40 +91,9 @@ export default function Home() {
     }
   }
 
-  function openAssistant() {
-    router.push("/assistant");
-  }
-
-  function openEvidenceReceipt() {
-    if (result) {
-      setDialog("receipt");
-    } else {
-      openAssistant();
-    }
-  }
-
   return (
     <main className="premium-shell">
-      <header className="premium-nav">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-4 py-4 sm:px-6 lg:px-8">
-          <a className="flex items-center gap-3" href="#top" aria-label="SatyaSetu home">
-            <div className="brand-orbit"><ShieldCheck size={21} /></div>
-            <div>
-              <div className="text-base font-black text-white">SatyaSetu</div>
-              <div className="text-xs font-bold text-cyan-100/75">National trust infrastructure</div>
-            </div>
-          </a>
-          <nav className="hidden items-center gap-7 text-sm font-bold text-cyan-50/78 lg:flex">
-            <button type="button" className="nav-link" onClick={() => setDialog("forward")}>WhatsApp</button>
-            <button type="button" className="nav-link" onClick={() => setDialog("ivr")}>Voice Agent</button>
-            <button type="button" className="nav-link" onClick={openAssistant}>AI Assistant</button>
-            <button type="button" className="nav-link" onClick={openEvidenceReceipt}>Evidence Receipt</button>
-          </nav>
-          <div className="flex items-center gap-3">
-            <ConnectivityIndicator connectivity={connectivity} t={t} pendingCount={pendingCount} isSyncing={isSyncing} />
-          </div>
-        </div>
-      </header>
+      <TopNav connectivity={connectivity} t={t} pendingCount={pendingCount} isSyncing={isSyncing} />
 
       <section id="top" className="hero-stage">
         <div className="hero-mesh" />
@@ -168,20 +127,7 @@ export default function Home() {
             <>
               <p className="hero-access-heading">One government-scheme verification service — however you reach it:</p>
               <div className="mx-auto mt-3 max-w-5xl">
-                <WinnerFeatures
-                  claim={claim}
-                  result={result}
-                  installedPackIds={installedPackIds}
-                  isLoading={isLoading}
-                  recorderState={recorder.state}
-                  dialog={dialog}
-                  setDialog={setDialog}
-                  onVerifyForward={verifyForwardedClaim}
-                  onPickScreenshot={() => fileInputRef.current?.click()}
-                  onToggleRecording={toggleRecording}
-                  onTogglePack={toggleOfflinePack}
-                  onOpenAssistant={openAssistant}
-                />
+                <WinnerFeatures />
               </div>
             </>
           ) : null}
@@ -345,37 +291,6 @@ function HeroExample() {
   );
 }
 
-function HeroConsole({ result, verdict }: { result: VerifyResponse | null; verdict: { label: string; color: string } | null }) {
-  return (
-    <div className="hero-console">
-      <div className="console-top">
-        <div className="flex items-center gap-2"><span className="dot bg-rose-400" /><span className="dot bg-amber-300" /><span className="dot bg-emerald-400" /></div>
-        <span className="text-xs font-black text-slate-400">SATYASETU COMMAND</span>
-      </div>
-      <div className="p-5 sm:p-6">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <div><div className="text-xs font-black uppercase text-cyan-300">Current verification</div><div className="mt-1 text-lg font-black text-white">Rural benefits claim</div></div>
-          <span className="premium-pill premium-pill-dark"><Clock3 size={14} /> Live</span>
-        </div>
-        <div className="claim-window"><p>“PM-KISAN gives eligible farmer families Rs 6,000 per year in three installments.”</p></div>
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          <ConsoleTile label="Registry" value="Official" />
-          <ConsoleTile label="Evidence" value={result ? String(result.evidence.length) : "3 matches"} />
-          <ConsoleTile label="Verdict" value={verdict?.label ?? "Verified"} hot />
-        </div>
-        <div className="mt-5 space-y-3">
-          {["pmkisan.gov.in", "pib.gov.in", "india.gov.in"].map((source, index) => (
-            <div className="source-line" key={source}>
-              <div className="flex items-center gap-3"><BadgeCheck size={17} className="text-emerald-300" /><span>{source}</span></div>
-              <span>{92 - index * 7}%</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function SectionHeader({ eyebrow, title, text }: { eyebrow: string; title: string; text: string }) {
   return (
     <div className="max-w-3xl">
@@ -393,15 +308,6 @@ function Capability({ icon: Icon, title, text }: { icon: LucideIcon; title: stri
       <h3 className="mt-5 text-lg font-black text-slate-950">{title}</h3>
       <p className="mt-3 text-sm leading-6 text-slate-600">{text}</p>
     </article>
-  );
-}
-
-function ConsoleTile({ label, value, hot = false }: { label: string; value: string; hot?: boolean }) {
-  return (
-    <div className="console-tile">
-      <div className="text-xs font-bold text-slate-400">{label}</div>
-      <div className={`mt-1 truncate text-sm font-black ${hot ? "text-emerald-300" : "text-white"}`}>{value}</div>
-    </div>
   );
 }
 
@@ -423,107 +329,3 @@ function GovernanceItem({ title, text }: { title: string; text: string }) {
   );
 }
 
-function EmptyResult() {
-  return (
-    <div className="flex min-h-[430px] flex-col justify-between">
-      <div>
-        <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-lg bg-teal-50 text-teal-700"><ShieldCheck size={24} /></div>
-        <h3 className="text-2xl font-black text-slate-950">Evidence room ready</h3>
-        <p className="mt-3 text-sm leading-6 text-slate-600">Run a claim to generate a verdict, source list, confidence, and limitations.</p>
-      </div>
-      <div className="grid gap-3">
-        {["Official-source retrieval", "Deterministic decisioning", "Citizen-readable explanation"].map((item) => (
-          <div className="result-row" key={item}><CheckCircle2 size={18} className="text-teal-700" />{item}</div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ResultPanel({
-  result,
-  verdict,
-  t,
-  isSpeaking,
-  playExplanation,
-}: {
-  result: VerifyResponse;
-  verdict: { label: string; color: string };
-  t: (key: string, vars?: Record<string, string | number>) => string;
-  isSpeaking: boolean;
-  playExplanation: (text: string) => void;
-}) {
-  return (
-    <div>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-        <span className={`verdict-badge ${verdict.color}`}><BadgeCheck size={17} /> {verdict.label}</span>
-        <div className="flex items-center gap-2">
-          <button className="icon-button icon-button-inline" aria-label={t("verdict.listen")} onClick={() => playExplanation(result.explanation)}>
-            {isSpeaking ? <SquareIcon size={14} /> : <Volume2 size={14} />}
-          </button>
-          <span className="status-pill"><Clock3 size={14} /> {new Date(result.checkedAt).toLocaleTimeString()}</span>
-        </div>
-      </div>
-      <h3 className="text-2xl font-black text-slate-950">{result.summary}</h3>
-      <p className="mt-3 text-sm leading-6 text-slate-700">{result.explanation}</p>
-      {result.verdict === "UNVERIFIED" ? (
-        <p className="mt-2 text-xs font-bold text-amber-700">{t("verdict.doNotTreatAsConfirmed")}</p>
-      ) : null}
-      <dl className="mt-6 grid grid-cols-3 gap-2">
-        <Fact label={t("verdict.confidence")} value={result.confidence} />
-        <Fact label="Sources" value={String(result.sourceCount)} />
-        <Fact label="Mode" value={result.offline ? "Offline" : "Live"} />
-      </dl>
-      {result.confidenceFactors?.length ? (
-        <ul className="mt-4 grid gap-1">
-          {result.confidenceFactors.map((factor) => (
-            <li className="text-xs font-bold text-slate-500" key={factor}>{factor}</li>
-          ))}
-        </ul>
-      ) : null}
-      <div className="mt-5 grid gap-3">
-        {result.evidence.slice(0, 3).map((item) => (
-          <article className="evidence-card p-4" key={item.id}>
-            <div className="flex flex-wrap gap-2"><span className="status-pill">{item.relationship}</span><span className="status-pill">{Math.round(item.relevance_score * 100)}% relevant</span></div>
-            <h4 className="mt-3 text-sm font-black text-slate-950">{item.document_title}</h4>
-            <p className="mt-2 text-sm leading-5 text-slate-600">{item.reason}</p>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
-              <span>{item.source_name}</span>
-              <span>·</span>
-              <span>{item.authority_level}</span>
-              {item.document_url ? (
-                <a className="text-teal-700 underline" href={item.document_url} target="_blank" rel="noopener noreferrer">
-                  {t("verdict.viewSource")}
-                </a>
-              ) : null}
-            </div>
-          </article>
-        ))}
-      </div>
-      {result.howVerified?.length ? (
-        <details className="mt-5 how-verified">
-          <summary className="cursor-pointer text-sm font-black text-slate-950">{t("verdict.howVerified")}</summary>
-          <ol className="mt-3 grid gap-2">
-            {result.howVerified.map((step) => (
-              <li className="text-xs leading-5 text-slate-600" key={step.step}>
-                <span className="font-black text-slate-950">{step.label}.</span> {step.detail}
-              </li>
-            ))}
-          </ol>
-        </details>
-      ) : null}
-      {result.limitations?.length ? (
-        <p className="mt-4 text-xs leading-5 text-amber-700">{result.limitations.join(" ")}</p>
-      ) : null}
-    </div>
-  );
-}
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
-      <dt className="text-xs font-bold text-slate-500">{label}</dt>
-      <dd className="mt-1 truncate text-sm font-black text-slate-950">{value}</dd>
-    </div>
-  );
-}

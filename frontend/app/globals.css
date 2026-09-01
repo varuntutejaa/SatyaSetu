@@ -64,6 +64,11 @@ a { text-decoration: none; }
   outline: none;
 }
 
+.premium-nav nav .nav-link-active {
+  color: #67e8f9;
+  text-shadow: 0 0 18px rgba(103,232,249,0.42);
+}
+
 .brand-orbit {
   display: grid;
   height: 44px;
@@ -406,6 +411,10 @@ a { text-decoration: none; }
   backdrop-filter: blur(24px);
 }
 
+.chat-shell-no-sidebar {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 /* Citizen-first winning features */
 .winner-launchpad {
   display: grid;
@@ -504,6 +513,11 @@ a { text-decoration: none; }
 }
 
 .feature-modal-wide { width: min(100%, 860px); }
+
+.feature-modal-embedded {
+  width: 100%;
+  max-height: none;
+}
 
 .modal-heading {
   display: flex;
@@ -647,6 +661,11 @@ a { text-decoration: none; }
   background: #071522;
   color: white;
   box-shadow: 0 46px 140px rgba(0,0,0,0.62), inset 0 0 0 5px rgba(255,255,255,0.025);
+}
+
+.ivr-phone-embedded {
+  margin: 0 auto;
+  max-height: none;
 }
 
 .ivr-phone-top {

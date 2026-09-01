@@ -36,14 +36,21 @@ const verdictStyles: Record<string, { label: string; className: string; color: s
   UNVERIFIED: { label: "Needs Evidence", className: "verdict-unverified", color: "text-amber-700" },
 };
 
+export type HistoryEntry = {
+  id: string;
+  claim: string;
+  result: VerifyResponse;
+  checkedAt: string;
+};
+
 export function useAssistantState() {
   const { language, setLanguage, t } = useLanguage();
   const connectivity = useOnlineStatus();
   const { pendingCount, enqueue, isSyncing } = useSyncQueue();
   const recorder = useVoiceRecorder();
 
-  const [claim, setClaim] = useState(fallbackClaims[0]);
-  const [sentClaim, setSentClaim] = useState(fallbackClaims[0]);
+  const [claim, setClaim] = useState("");
+  const [sentClaim, setSentClaim] = useState("");
   const [demoClaims, setDemoClaims] = useState<string[]>(fallbackClaims);
   const [result, setResult] = useState<VerifyResponse | null>(null);
   const [sources, setSources] = useState<SourceOut[]>([]);
@@ -68,10 +75,6 @@ export function useAssistantState() {
       })
       .catch(() => setDemoClaims(fallbackClaims));
 
-    getHealth()
-      .then(() => setApiOnline(true))
-      .catch(() => setApiOnline(false));
-
     getSources()
       .then((data) => {
         setSources(data);
@@ -81,6 +84,26 @@ export function useAssistantState() {
 
     getSetting("dataSaver", false).then(setDataSaver).catch(() => {});
     getSetting<string[]>("installedOfflinePacks", []).then(setInstalledPackIds).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    function checkHealth() {
+      getHealth()
+        .then(() => { if (!cancelled) setApiOnline(true); })
+        .catch(() => { if (!cancelled) setApiOnline(false); });
+    }
+
+    checkHealth();
+    const interval = window.setInterval(checkHealth, 20000);
+    window.addEventListener("focus", checkHealth);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", checkHealth);
+    };
   }, []);
 
   useEffect(() => {

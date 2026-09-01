@@ -182,6 +182,7 @@ export function IvrSimulator({
   recorderState,
   onToggleRecording,
   onVerify,
+  embedded = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -189,6 +190,7 @@ export function IvrSimulator({
   recorderState: "idle" | "recording" | "processing";
   onToggleRecording: () => void;
   onVerify: (text: string) => Promise<VerifyResponse | null>;
+  embedded?: boolean;
 }) {
   const [mounted, setMounted] = useState(false);
   const [phase, setPhase] = useState<IvrPhase>("language");
@@ -245,17 +247,16 @@ export function IvrSimulator({
     setPhase("claim");
   }
 
-  if (!open || !mounted) return null;
+  if (!open || (!embedded && !mounted)) return null;
 
-  return createPortal(
-    <div className="ivr-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
-      <section className="ivr-phone" role="dialog" aria-modal="true" aria-labelledby="ivr-title">
+  const phone = (
+      <section className={`ivr-phone ${embedded ? "ivr-phone-embedded" : ""}`} role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true} aria-labelledby="ivr-title">
         <div className="ivr-phone-top">
           <div className="ivr-call-identity">
             <span className="ivr-logo"><ShieldCheck size={22} /></span>
             <div><h2 id="ivr-title">SatyaSetu Helpline</h2><p>{elapsed} · Sarvam voice demo</p></div>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close IVR simulator"><X size={19} /></button>
+          {embedded ? null : <button type="button" onClick={onClose} aria-label="Close IVR simulator"><X size={19} /></button>}
         </div>
 
         <div className="ivr-screen" aria-live="polite">
@@ -338,6 +339,13 @@ export function IvrSimulator({
           {phase === "claim" && spokenClaim ? <button type="button" className="ivr-clear" onClick={() => setSpokenClaim("")} aria-label="Clear claim"><Delete size={18} /></button> : null}
         </div>
       </section>
+  );
+
+  if (embedded) return phone;
+
+  return createPortal(
+    <div className="ivr-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      {phone}
     </div>,
     document.body,
   );

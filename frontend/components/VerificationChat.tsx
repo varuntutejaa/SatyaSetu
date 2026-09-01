@@ -4,11 +4,8 @@ import {
   AlertCircle,
   BadgeCheck,
   CheckCircle2,
-  Cloud,
-  FileSearch,
   Loader2,
   Mic,
-  PackageCheck,
   Send,
   ShieldCheck,
   SquareIcon,
@@ -17,7 +14,6 @@ import {
   WifiOff,
   Zap,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
 import { useEffect, useRef } from "react";
 import type { RefObject } from "react";
 
@@ -48,15 +44,11 @@ export function VerificationChat({
   demoClaims,
   t,
   connectivity,
-  pendingCount,
   recorderState,
   isTranscribing,
   isSpeaking,
   toggleRecording,
   playExplanation,
-  dataSaver,
-  setDataSaver,
-  onOpenOfflinePacks,
 }: {
   claim: string;
   setClaim: (value: string) => void;
@@ -78,15 +70,11 @@ export function VerificationChat({
   demoClaims: string[];
   t: (key: string, vars?: Record<string, string | number>) => string;
   connectivity: "online" | "weak" | "offline";
-  pendingCount: number;
   recorderState: "idle" | "recording" | "processing";
   isTranscribing: boolean;
   isSpeaking: boolean;
   toggleRecording: () => void;
   playExplanation: (text: string) => void;
-  dataSaver: boolean;
-  setDataSaver: (value: boolean) => void;
-  onOpenOfflinePacks: () => void;
 }) {
   const chatBodyRef = useRef<HTMLDivElement>(null);
 
@@ -97,42 +85,7 @@ export function VerificationChat({
   }, [result, error, notice, isLoading]);
 
   return (
-    <section className="chat-shell" aria-label="SatyaSetu verification chat">
-      <div className="chat-sidebar">
-        <div>
-          <div className="text-xs font-black uppercase text-cyan-200/80">Workspace</div>
-          <h2 className="mt-2 text-xl font-black text-white">Citizen Trust Desk</h2>
-        </div>
-        <div className="chat-tool-list">
-          <ChatTool icon={FileSearch} label="Verify claim" active onClick={verifyClaim} />
-          <ChatTool icon={Upload} label="Read screenshot" onClick={() => fileInputRef.current?.click()} />
-          <ChatTool
-            icon={Mic}
-            label={recorderState === "recording" ? t("verify.listening") : t("home.speak")}
-            active={recorderState === "recording"}
-            onClick={toggleRecording}
-          />
-          <ChatTool icon={Cloud} label={`${t("dashboard.syncNow")}${pendingCount ? ` (${pendingCount})` : ""}`} />
-          <ChatTool icon={PackageCheck} label="Offline packs" onClick={onOpenOfflinePacks} />
-        </div>
-        <div className="sidebar-card">
-            <div className="text-sm font-black text-white">{apiOnline ? "Backend connected" : "Backend offline"}</div>
-            <p className="mt-2 text-xs leading-5 text-slate-500">
-              {sources.length ? `${sources.length} trusted sources loaded from FastAPI.` : "Start FastAPI on port 8001 for live evidence."}
-            </p>
-            {connectivity !== "online" ? (
-              <p className="mt-2 text-xs leading-5 text-amber-300">{t(`connectivity.${connectivity}`)}</p>
-            ) : null}
-            {pendingCount > 0 ? (
-              <p className="mt-2 text-xs leading-5 text-teal-700">{pendingCount} queued for sync</p>
-            ) : null}
-          </div>
-          <label className="sidebar-toggle">
-            <span>{t("dashboard.dataSaver")}</span>
-            <input type="checkbox" checked={dataSaver} onChange={(event) => setDataSaver(event.target.checked)} />
-          </label>
-        </div>
-
+    <section className="chat-shell chat-shell-no-sidebar" aria-label="SatyaSetu verification chat">
       <div className="chat-main">
         <div className="chat-header">
           <div>
@@ -166,12 +119,14 @@ export function VerificationChat({
             </div>
           </div>
 
-          <div className="user-message">
-            <div className="message-card user-card">
-              <p>{sentClaim}</p>
+          {sentClaim ? (
+            <div className="user-message">
+              <div className="message-card user-card">
+                <p>{sentClaim}</p>
+              </div>
+              <div className="avatar user-avatar">You</div>
             </div>
-            <div className="avatar user-avatar">You</div>
-          </div>
+          ) : null}
 
           {isLoading ? (
             <div className="assistant-message">
@@ -299,11 +254,3 @@ export function VerificationChat({
   );
 }
 
-function ChatTool({ icon: Icon, label, active = false, onClick }: { icon: LucideIcon; label: string; active?: boolean; onClick?: () => void }) {
-  return (
-    <button className={`chat-tool ${active ? "chat-tool-active" : ""}`} onClick={onClick}>
-      <Icon size={17} />
-      {label}
-    </button>
-  );
-}

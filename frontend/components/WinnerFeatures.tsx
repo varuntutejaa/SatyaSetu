@@ -1,188 +1,36 @@
 "use client";
 
-import {
-  AudioLines,
-  Check,
-  Copy,
-  Download,
-  Loader2,
-  MessageCircleMore,
-  Mic,
-  QrCode,
-  ReceiptText,
-  RefreshCw,
-  Send,
-  Share2,
-  ShieldCheck,
-  Upload,
-  WifiOff,
-  X,
-} from "lucide-react";
-import QRCode from "qrcode";
-import { useEffect, useMemo, useState } from "react";
+import { AudioLines, Check, Download, MessageCircleMore, ReceiptText, RefreshCw, ShieldCheck, WifiOff, X } from "lucide-react";
+import Link from "next/link";
 
-import { IvrSimulator } from "@/components/IvrSimulator";
 import { OFFLINE_PACKS } from "@/lib/offlinePacks";
-import type { VerifyResponse } from "@/services/api";
 
-export type FeatureDialog = "ivr" | "forward" | "packs" | "receipt" | null;
+export type FeatureDialog = "packs" | null;
 
-type WinnerFeaturesProps = {
-  claim: string;
-  result: VerifyResponse | null;
-  installedPackIds: string[];
-  isLoading: boolean;
-  recorderState: "idle" | "recording" | "processing";
-  dialog: FeatureDialog;
-  setDialog: (dialog: FeatureDialog) => void;
-  onVerifyForward: (text: string) => Promise<VerifyResponse | null>;
-  onPickScreenshot: () => void;
-  onToggleRecording: () => void;
-  onTogglePack: (packId: string) => void;
-  onOpenAssistant: () => void;
-};
-
-export function WinnerFeatures({
-  claim,
-  result,
-  installedPackIds,
-  isLoading,
-  recorderState,
-  dialog,
-  setDialog,
-  onVerifyForward,
-  onPickScreenshot,
-  onToggleRecording,
-  onTogglePack,
-  onOpenAssistant,
-}: WinnerFeaturesProps) {
+export function WinnerFeatures() {
   return (
-    <>
-      <section className="winner-launchpad" aria-label="Fast verification tools">
-        <button type="button" className="winner-action winner-action-primary" onClick={() => setDialog("forward")}>
-          <span className="winner-action-icon"><MessageCircleMore size={22} /></span>
-          <span><strong>WhatsApp</strong><small>Forward a scheme message, screenshot or voice note</small></span>
-          <span className="winner-arrow">01</span>
-        </button>
-        <button type="button" className="winner-action winner-action-call" onClick={() => setDialog("ivr")}>
-          <span className="winner-action-icon"><AudioLines size={22} /></span>
-          <span><strong>Instant Voice Agent</strong><small>Ask about a government scheme in your language, voice to voice</small></span>
-          <span className="winner-arrow">AI</span>
-        </button>
-        <button type="button" className="winner-action" onClick={onOpenAssistant}>
-          <span className="winner-action-icon"><ShieldCheck size={22} /></span>
-          <span><strong>SatyaSetu AI Assistant</strong><small>Type or speak a scheme claim right here on the page</small></span>
-          <span className="winner-arrow">02</span>
-        </button>
-        <button type="button" className="winner-action" onClick={() => setDialog("receipt")} disabled={!result}>
-          <span className="winner-action-icon"><ReceiptText size={22} /></span>
-          <span><strong>Evidence Receipt</strong><small>{result ? "Listen, copy or share the correction" : "Available after verification"}</small></span>
-          <span className="winner-arrow">03</span>
-        </button>
-      </section>
-
-      <FeatureDialogs
-        claim={claim}
-        result={result}
-        installedPackIds={installedPackIds}
-        isLoading={isLoading}
-        recorderState={recorderState}
-        dialog={dialog}
-        setDialog={setDialog}
-        onVerifyForward={onVerifyForward}
-        onPickScreenshot={onPickScreenshot}
-        onToggleRecording={onToggleRecording}
-        onTogglePack={onTogglePack}
-      />
-    </>
-  );
-}
-
-export function FeatureDialogs({
-  claim,
-  result,
-  installedPackIds,
-  isLoading,
-  recorderState,
-  dialog,
-  setDialog,
-  onVerifyForward,
-  onPickScreenshot,
-  onToggleRecording,
-  onTogglePack,
-}: Omit<WinnerFeaturesProps, "onOpenAssistant">) {
-  const [forwardText, setForwardText] = useState(claim);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const sharedText = [params.get("title"), params.get("text"), params.get("url")].filter(Boolean).join("\n").trim();
-    if (sharedText) {
-      setForwardText(sharedText);
-      setDialog("forward");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (dialog === "forward") setForwardText(claim);
-  }, [claim, dialog]);
-
-  useEffect(() => {
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setDialog(null);
-    }
-    window.addEventListener("keydown", closeOnEscape);
-    return () => window.removeEventListener("keydown", closeOnEscape);
-  }, []);
-
-  return (
-    <>
-      {dialog === "forward" ? (
-        <Dialog title="Forward to SatyaSetu" subtitle="Check it before you trust it or send it on." onClose={() => setDialog(null)}>
-          <div className="channel-badge"><MessageCircleMore size={16} /> WhatsApp-ready verification</div>
-          <label className="modal-label" htmlFor="forwarded-message">Message you received</label>
-          <textarea
-            id="forwarded-message"
-            className="forward-textarea"
-            value={forwardText}
-            onChange={(event) => setForwardText(event.target.value)}
-            placeholder="Paste the forwarded message here…"
-            autoFocus
-          />
-          <div className="forward-inputs">
-            <button onClick={onPickScreenshot}><Upload size={18} /> Screenshot</button>
-            <button className={recorderState === "recording" ? "recording" : ""} onClick={onToggleRecording}>
-              <Mic size={18} /> {recorderState === "recording" ? "Stop recording" : "Voice note"}
-            </button>
-          </div>
-          <button
-            className="modal-primary"
-            disabled={isLoading || forwardText.trim().length < 3}
-            onClick={async () => {
-              await onVerifyForward(forwardText);
-              setDialog(null);
-            }}
-          >
-            {isLoading ? <Loader2 className="animate-spin" size={19} /> : <Send size={19} />}
-            Check this message
-          </button>
-          <p className="privacy-line"><ShieldCheck size={15} /> Screenshots are processed in memory and are not saved.</p>
-        </Dialog>
-      ) : null}
-
-      {dialog === "packs" ? (
-        <OfflinePacksDialog installedPackIds={installedPackIds} onTogglePack={onTogglePack} onClose={() => setDialog(null)} />
-      ) : null}
-
-      {dialog === "receipt" && result ? <ReceiptDialog result={result} onClose={() => setDialog(null)} /> : null}
-      <IvrSimulator
-        open={dialog === "ivr"}
-        onClose={() => setDialog(null)}
-        claim={claim}
-        recorderState={recorderState}
-        onToggleRecording={onToggleRecording}
-        onVerify={onVerifyForward}
-      />
-    </>
+    <section className="winner-launchpad" aria-label="Fast verification tools">
+      <Link href="/whatsapp" className="winner-action winner-action-primary">
+        <span className="winner-action-icon"><MessageCircleMore size={22} /></span>
+        <span><strong>WhatsApp</strong><small>Forward a scheme message, screenshot or voice note</small></span>
+        <span className="winner-arrow">01</span>
+      </Link>
+      <Link href="/voice-agent" className="winner-action winner-action-call">
+        <span className="winner-action-icon"><AudioLines size={22} /></span>
+        <span><strong>Instant Voice Agent</strong><small>Ask about a government scheme in your language, voice to voice</small></span>
+        <span className="winner-arrow">AI</span>
+      </Link>
+      <Link href="/assistant" className="winner-action">
+        <span className="winner-action-icon"><ShieldCheck size={22} /></span>
+        <span><strong>SatyaSetu AI Assistant</strong><small>Type or speak a scheme claim right here on the page</small></span>
+        <span className="winner-arrow">02</span>
+      </Link>
+      <Link href="/evidence-receipt" className="winner-action">
+        <span className="winner-action-icon"><ReceiptText size={22} /></span>
+        <span><strong>Evidence Receipt</strong><small>View, listen to, or share your latest verification</small></span>
+        <span className="winner-arrow">03</span>
+      </Link>
+    </section>
   );
 }
 
@@ -222,7 +70,7 @@ export function OfflinePacksDialog({
   );
 }
 
-function Dialog({
+export function Dialog({
   title,
   subtitle,
   onClose,
@@ -245,63 +93,5 @@ function Dialog({
         {children}
       </section>
     </div>
-  );
-}
-
-function ReceiptDialog({ result, onClose }: { result: VerifyResponse; onClose: () => void }) {
-  const [qrUrl, setQrUrl] = useState("");
-  const [copied, setCopied] = useState(false);
-  const source = result.evidence[0];
-  const receiptText = useMemo(
-    () => `SatyaSetu: ${result.verdict}\n${result.summary}\nConfidence: ${result.confidence}\n${source ? `Official source: ${source.source_domain}` : "No authoritative source confirmed this claim."}\nChecked: ${new Date(result.checkedAt).toLocaleString()}`,
-    [result, source],
-  );
-
-  useEffect(() => {
-    const target = source?.document_url || window.location.href.split("?")[0];
-    QRCode.toDataURL(target, { width: 220, margin: 1, color: { dark: "#082f49", light: "#ffffff" } })
-      .then(setQrUrl)
-      .catch(() => setQrUrl(""));
-  }, [source]);
-
-  async function copyReceipt() {
-    await navigator.clipboard.writeText(receiptText);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1800);
-  }
-
-  async function shareReceipt() {
-    if (navigator.share) {
-      await navigator.share({ title: "SatyaSetu evidence receipt", text: receiptText });
-      return;
-    }
-    await copyReceipt();
-  }
-
-  const verdictClass = result.verdict === "VERIFIED" ? "receipt-good" : result.verdict === "CONTRADICTED" ? "receipt-bad" : "receipt-warn";
-
-  return (
-    <Dialog title="Evidence receipt" subtitle="A small proof card made to be understood and forwarded." onClose={onClose}>
-      <article className={`evidence-receipt ${verdictClass}`} id="evidence-receipt">
-        <div className="receipt-brand"><span><ShieldCheck size={18} /> SatyaSetu</span><small>Evidence before belief</small></div>
-        <div className="receipt-verdict">{result.verdict === "UNVERIFIED" ? "NEEDS EVIDENCE" : result.verdict}</div>
-        <h3>{result.summary}</h3>
-        <p>{result.explanation}</p>
-        <div className="receipt-grid">
-          <div><small>Confidence</small><strong>{result.confidence}</strong></div>
-          <div><small>Official sources</small><strong>{result.sourceCount}</strong></div>
-          <div><small>Checked</small><strong>{new Date(result.checkedAt).toLocaleDateString()}</strong></div>
-        </div>
-        <div className="receipt-proof">
-          <div><small>Primary evidence</small><strong>{source?.source_name || "No conclusive evidence"}</strong><span>{source?.source_domain || "Reconnect for a live search"}</span></div>
-          {qrUrl ? <img src={qrUrl} alt="QR code to official evidence" width={94} height={94} /> : <div className="qr-placeholder"><QrCode size={36} /></div>}
-        </div>
-        <div className="receipt-footnote">Community reports do not decide this verdict. Evidence and fixed verification rules do.</div>
-      </article>
-      <div className="receipt-actions">
-        <button onClick={copyReceipt}>{copied ? <Check size={17} /> : <Copy size={17} />}{copied ? "Copied" : "Copy correction"}</button>
-        <button className="receipt-share" onClick={shareReceipt}><Share2 size={17} /> Share receipt</button>
-      </div>
-    </Dialog>
   );
 }
