@@ -117,7 +117,10 @@ export function useAssistantState() {
 
   async function runVerification(input: string) {
     const claimText = input.trim();
-    if (claimText.length < 3) return null;
+    if (claimText.length < 3) {
+      setError(t("errors.claimTooShort"));
+      return null;
+    }
     setError("");
     setNotice("");
     setSentClaim(claimText);

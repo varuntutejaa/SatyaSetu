@@ -105,7 +105,8 @@
     "offlineNeedsConnection": "You are offline. We can check cached information, but current verification requires connectivity.",
     "voiceUnavailable": "Voice service unavailable. You can type your claim instead.",
     "ocrUnavailable": "Could not read this image. Please try typing the message instead.",
-    "fileTooLarge": "This file is too large. Please choose a smaller image."
+    "fileTooLarge": "This file is too large. Please choose a smaller image.",
+    "claimTooShort": "Please type a few more words so I have something to check."
   },
   "privacy": {
     "notice": "We minimize stored data and allow deletion."
