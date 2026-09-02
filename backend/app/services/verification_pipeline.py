@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.models import Claim, Evidence, Verification
 from app.providers.base import EmbeddingProvider, LLMProvider, ProviderUnavailableError
 from app.providers.llm.rule_based_llm import RuleBasedLLMProvider
+from app.providers.sarvam import SarvamTranslationProvider
 from app.rag.retrieval import retrieve_evidence
 from app.services.claim_extraction import extract_claim
 from app.verification.engine import run_verification
@@ -19,6 +20,16 @@ async def run_verification_pipeline(
     language_hint: str | None = None,
 ) -> dict:
     extracted = extract_claim(raw_text, language_hint)
+    verification_text = extracted.normalized_text
+    limitations = []
+
+    if extracted.language != "en-IN":
+        try:
+            verification_text = await SarvamTranslationProvider().translate(extracted.normalized_text, extracted.language, "en-IN")
+        except ProviderUnavailableError:
+            limitations.append(
+                "Could not translate this claim for source matching; results may be limited."
+            )
 
     claim = Claim(
         raw_text=extracted.raw_text,
@@ -29,18 +40,17 @@ async def run_verification_pipeline(
     db.add(claim)
     db.flush()
 
-    evidence = retrieve_evidence(db, extracted.normalized_text, embedder)
+    evidence = retrieve_evidence(db, verification_text, embedder)
 
-    limitations = []
     if evidence:
         try:
-            comparison = await llm.compare_claim_to_evidence(extracted.normalized_text, evidence)
+            comparison = await llm.compare_claim_to_evidence(verification_text, evidence)
         except ProviderUnavailableError:
             # A configured LLM (rate-limited, down, bad key, ...) never takes
             # the whole verification pipeline down — fall back to the
             # deterministic rule-based comparator so the user still gets an
             # evidence-backed verdict, just with a noted limitation.
-            comparison = await RuleBasedLLMProvider().compare_claim_to_evidence(extracted.normalized_text, evidence)
+            comparison = await RuleBasedLLMProvider().compare_claim_to_evidence(verification_text, evidence)
             comparison.setdefault("limitations", []).append(
                 "The configured AI comparator was unavailable; a rule-based comparison was used instead."
             )
@@ -49,7 +59,7 @@ async def run_verification_pipeline(
     else:
         assessments = []
 
-    result = run_verification(extracted.normalized_text, evidence, assessments, limitations)
+    result = run_verification(verification_text, evidence, assessments, limitations)
 
     verification = Verification(
         claim_id=claim.id,

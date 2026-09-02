@@ -9,7 +9,7 @@ import { createPortal } from "react-dom";
 import { ConnectivityIndicator } from "@/components/ConnectivityIndicator";
 import { SUPPORTED_LANGUAGES, useLanguage } from "@/lib/i18n";
 import type { LanguageCode } from "@/lib/i18n";
-import { speechToText, textToSpeech, verifyClaim } from "@/services/api";
+import { runVoiceAgent } from "@/services/api";
 import type { VerifyResponse } from "@/services/api";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 import { resultHeading } from "@/lib/resultCopy";
@@ -88,38 +88,27 @@ function useNavbarVoiceAgent() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const speakResult = useCallback(async (response: VerifyResponse, lang: LanguageCode) => {
-    const spoken = [
-      `Verdict: ${response.verdict === "UNVERIFIED" ? "Needs evidence" : response.verdict}.`,
-      resultHeading(response),
-      response.explanation,
-    ].join(" ").slice(0, 900);
-
-    const speech = await textToSpeech(spoken, lang);
-    if (!audioRef.current) return;
-    audioRef.current.src = `data:${speech.mime_type};base64,${speech.audio_base64}`;
-    audioRef.current.onended = () => setIsSpeaking(false);
-    setIsSpeaking(true);
-    await audioRef.current.play();
-  }, []);
-
   const processAudio = useCallback(async (blob: Blob) => {
     setIsWorking(true);
     setError("");
     setStep("transcribing");
     setStatus("Understanding your voice...");
     try {
-      const stt = await speechToText(blob, language);
-      const spokenText = stt.text.trim();
+      const response = await runVoiceAgent(blob, language);
+      const spokenText = response.transcript.trim();
       if (spokenText.length < 3) throw new Error("Could not hear a complete claim. Please try again.");
       setTranscript(spokenText);
       setStep("checking");
       setStatus("Checking official proof...");
-      const verified = await verifyClaim(spokenText, stt.language as LanguageCode || language);
-      setResult(verified);
+      setResult(response.verification);
       setStep("speaking");
-      setStatus("Speaking the evidence-backed response...");
-      await speakResult(verified, (stt.language as LanguageCode) || language);
+      setStatus("Speaking the answer...");
+      if (audioRef.current && response.audio_base64) {
+        audioRef.current.src = `data:${response.mime_type};base64,${response.audio_base64}`;
+        audioRef.current.onended = () => setIsSpeaking(false);
+        setIsSpeaking(true);
+        await audioRef.current.play();
+      }
       setStep("done");
       setStatus("Done. You can ask another claim.");
     } catch (err) {
@@ -128,7 +117,7 @@ function useNavbarVoiceAgent() {
     } finally {
       setIsWorking(false);
     }
-  }, [language, speakResult]);
+  }, [language]);
 
   const recorder = useVoiceRecorder(MAX_RECORDING_SECONDS * 1000, processAudio);
 

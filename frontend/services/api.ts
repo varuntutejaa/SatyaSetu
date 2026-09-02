@@ -152,6 +152,22 @@ export function textToSpeech(text: string, language: string) {
   });
 }
 
+export type VoiceAgentResponse = {
+  transcript: string;
+  transcript_language: string;
+  verification: VerifyResponse;
+  spoken_text: string;
+  audio_base64: string;
+  mime_type: string;
+};
+
+export function runVoiceAgent(audioBlob: Blob, languageHint?: string) {
+  const form = new FormData();
+  form.append("file", audioBlob, audioFileName(audioBlob));
+  if (languageHint) form.append("language_hint", languageHint);
+  return request<VoiceAgentResponse>("/api/voice-agent", { method: "POST", body: form });
+}
+
 export type SyncItem = { idempotency_key: string; claim_text: string; language?: string };
 export type SyncResultItem = { idempotency_key: string; status: string; verification_id?: string; error?: string };
 

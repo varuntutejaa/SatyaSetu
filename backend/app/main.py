@@ -4,7 +4,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import demo, evidence, ivr, ocr, reports, sources, stt, sync, translate, tts, twilio_whatsapp, verify, whatsapp
+from app.api import demo, evidence, ivr, ocr, reports, sources, stt, sync, translate, tts, twilio_whatsapp, verify, voice_agent, whatsapp
 from app.config import get_settings
 from app.database.db import Base, SessionLocal, engine
 from app.database.seed import seed_if_empty
@@ -56,6 +56,7 @@ def health():
 
 
 app.include_router(verify.router)
+app.include_router(voice_agent.router)
 app.include_router(ocr.router)
 app.include_router(stt.router)
 app.include_router(tts.router)
