@@ -135,14 +135,6 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="brand-strip">
-        <div className="mx-auto grid max-w-7xl gap-3 px-4 py-5 sm:px-6 md:grid-cols-4 lg:px-8">
-          {["For citizens", "For service centers", "For field workers", "For district teams"].map((item) => (
-            <div className="brand-chip" key={item}>{item}</div>
-          ))}
-        </div>
-      </section>
-
       <section id="platform" className="section-wrap">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <SectionHeader eyebrow="Why Use It" title="Get a clear answer before you share or pay." text="Avoid fake links, false promises, and confusing scheme messages." />
