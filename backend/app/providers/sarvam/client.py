@@ -2,7 +2,7 @@
 
 Endpoint shapes follow Sarvam's published REST API (api.sarvam.ai):
   POST /speech-to-text   (multipart: file, model, language_code)
-  POST /text-to-speech   (json: text, target_language_code, speaker, model)
+  POST /text-to-speech   (json: text, language_code, speaker, model)
   POST /translate        (json: input, source_language_code, target_language_code)
   POST /text-lid         (json: input) -> language identification
 
@@ -31,12 +31,26 @@ class SarvamClient:
             raise ProviderUnavailableError("SARVAM_API_KEY is not configured")
         return self.settings.sarvam_api_key
 
+    @property
+    def stt_model(self) -> str:
+        if self.settings.sarvam_stt_model in {"saaras:v2.5", "saarika:v2.5"}:
+            return "saaras:v3"
+        return self.settings.sarvam_stt_model
+
+    @property
+    def tts_model(self) -> str:
+        if self.settings.sarvam_tts_model in {"bulbul:v1", "bulbul:v2"}:
+            return "bulbul:v3"
+        return self.settings.sarvam_tts_model
+
     async def speech_to_text(self, audio_bytes: bytes, mime_type: str, language_code: str | None) -> dict:
         key = self._require_key()
         try:
             async with httpx.AsyncClient(timeout=30) as client:
                 files = {"file": ("audio.wav", audio_bytes, mime_type)}
-                data = {"model": self.settings.sarvam_stt_model}
+                data = {"model": self.stt_model}
+                if self.stt_model == "saaras:v3":
+                    data["mode"] = "transcribe"
                 if language_code:
                     data["language_code"] = language_code
                 resp = await client.post(
@@ -54,13 +68,16 @@ class SarvamClient:
         key = self._require_key()
         try:
             async with httpx.AsyncClient(timeout=30) as client:
+                model = self.tts_model
                 resp = await client.post(
                     f"{SARVAM_BASE_URL}/text-to-speech",
                     headers={"api-subscription-key": key, "Content-Type": "application/json"},
                     json={
                         "text": text,
-                        "target_language_code": target_language_code,
-                        "model": self.settings.sarvam_tts_model,
+                        "language_code": target_language_code,
+                        "model": model,
+                        "speaker": "shubh" if model == "bulbul:v3" else "anushka",
+                        "pace": 0.9,
                     },
                 )
                 resp.raise_for_status()

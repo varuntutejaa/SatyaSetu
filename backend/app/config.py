@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     vector_database_url: str = ""
 
     sarvam_api_key: str = ""
-    sarvam_stt_model: str = "saaras:v2.5"
-    sarvam_tts_model: str = "bulbul:v2"
+    sarvam_stt_model: str = "saaras:v3"
+    sarvam_tts_model: str = "bulbul:v3"
 
     llm_api_key: str = ""
     llm_provider: str = "anthropic"

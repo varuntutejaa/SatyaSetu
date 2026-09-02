@@ -47,7 +47,7 @@ export function useAssistantState() {
   const { language, setLanguage, t } = useLanguage();
   const connectivity = useOnlineStatus();
   const { pendingCount, enqueue, isSyncing } = useSyncQueue();
-  const recorder = useVoiceRecorder();
+  const recorder = useVoiceRecorder(12000, processVoiceBlob);
 
   const [claim, setClaim] = useState("");
   const [sentClaim, setSentClaim] = useState("");
@@ -64,6 +64,7 @@ export function useAssistantState() {
   const [dialog, setDialog] = useState<FeatureDialog>(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -127,6 +128,25 @@ export function useAssistantState() {
     return verdictStyles[result.verdict] ?? verdictStyles.UNVERIFIED;
   }, [result]);
 
+  function pushHistory(claimText: string, response: VerifyResponse) {
+    const entry: HistoryEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      claim: claimText,
+      result: response,
+      checkedAt: response.checkedAt,
+    };
+    setHistory((current) => [entry, ...current].slice(0, 30));
+  }
+
+  function selectHistoryEntry(id: string) {
+    const entry = history.find((item) => item.id === id);
+    if (!entry) return;
+    setError("");
+    setNotice("");
+    setSentClaim(entry.claim);
+    setResult(entry.result);
+  }
+
   async function runVerification(input: string) {
     const claimText = input.trim();
     if (claimText.length < 3) {
@@ -142,15 +162,18 @@ export function useAssistantState() {
       const cached = await getCachedVerification(claimText);
       if (cached) {
         // Never present cached data as live — the spec is explicit about this.
-        setResult({ ...cached.result, offline: true });
+        const offlineResult = { ...cached.result, offline: true };
+        setResult(offlineResult);
         setNotice(t("offline.lastUpdate", { date: new Date(cached.cachedAt).toLocaleString() }));
-        return { ...cached.result, offline: true };
+        pushHistory(claimText, offlineResult);
+        return offlineResult;
       } else {
         const packResult = matchOfflinePack(claimText, installedPackIds, language);
         if (packResult) {
           setResult(packResult);
           setNotice("Verified on this device with a downloaded trust pack. Check the saved update date before acting.");
           cacheVerification(claimText, language, packResult).catch(() => {});
+          pushHistory(claimText, packResult);
           return packResult;
         }
         await enqueue(claimText, language);
@@ -166,6 +189,7 @@ export function useAssistantState() {
       setResult(response);
       setApiOnline(true);
       cacheVerification(claimText, language, response).catch(() => {});
+      pushHistory(claimText, response);
       return response;
     } catch (err) {
       setApiOnline(false);
@@ -174,6 +198,7 @@ export function useAssistantState() {
         setResult(packResult);
         setNotice("The live service is unavailable, so SatyaSetu used a downloaded trust pack and marked the result offline.");
         cacheVerification(claimText, language, packResult).catch(() => {});
+        pushHistory(claimText, packResult);
         return packResult;
       } else {
         setError(err instanceof Error ? err.message : t("errors.aiUnavailable"));
@@ -215,6 +240,7 @@ export function useAssistantState() {
       setApiOnline(true);
       setNotice("Screenshot read and verified.");
       cacheVerification(response.claim, language, response).catch(() => {});
+      pushHistory(response.claim, response);
     } catch (err) {
       setApiOnline(false);
       setError(err instanceof Error ? err.message : t("errors.ocrUnavailable"));
@@ -223,22 +249,25 @@ export function useAssistantState() {
     }
   }
 
+  async function processVoiceBlob(blob: Blob) {
+    setIsTranscribing(true);
+    setNotice(t("verify.listening"));
+    try {
+      const transcription = await speechToText(blob, language);
+      setClaim(transcription.text);
+      setNotice("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("errors.voiceUnavailable"));
+    } finally {
+      setIsTranscribing(false);
+    }
+  }
+
   async function toggleRecording() {
     setError("");
     if (recorder.state === "recording") {
       const blob = await recorder.stop();
-      if (!blob) return;
-      setIsTranscribing(true);
-      setNotice(t("verify.listening"));
-      try {
-        const transcription = await speechToText(blob, language);
-        setClaim(transcription.text);
-        setNotice("");
-      } catch (err) {
-        setError(err instanceof Error ? err.message : t("errors.voiceUnavailable"));
-      } finally {
-        setIsTranscribing(false);
-      }
+      if (blob) await processVoiceBlob(blob);
       return;
     }
     await recorder.start();
@@ -311,6 +340,8 @@ export function useAssistantState() {
     setDialog,
     error,
     notice,
+    history,
+    selectHistoryEntry,
     fileInputRef: fileInputRef as RefObject<HTMLInputElement>,
     audioRef,
     verdict,

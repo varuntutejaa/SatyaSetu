@@ -11,7 +11,7 @@ class SarvamSpeechProvider(SpeechProvider):
         return TranscriptionResult(
             text=data.get("transcript", ""),
             language=data.get("language_code", language_hint or "unknown"),
-            confidence=float(data.get("confidence", 0) or 0),
+            confidence=float(data.get("language_probability", data.get("confidence", 0)) or 0),
         )
 
 

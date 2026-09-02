@@ -33,6 +33,8 @@ export default function AssistantPage() {
             isReporting={assistant.isReporting}
             error={assistant.error}
             notice={assistant.notice}
+            history={assistant.history}
+            onSelectHistory={assistant.selectHistoryEntry}
             verifyClaim={assistant.verifyClaim}
             reportClaim={assistant.reportClaim}
             fileInputRef={assistant.fileInputRef}

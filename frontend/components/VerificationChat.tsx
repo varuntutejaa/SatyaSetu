@@ -4,6 +4,7 @@ import {
   AlertCircle,
   BadgeCheck,
   CheckCircle2,
+  Clock3,
   Loader2,
   Mic,
   Send,
@@ -20,8 +21,15 @@ import type { RefObject } from "react";
 import type { SourceOut, VerifyResponse } from "@/services/api";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import type { LanguageCode } from "@/lib/i18n";
+import type { HistoryEntry } from "@/hooks/useAssistantState";
 
 const languages = SUPPORTED_LANGUAGES.map(({ code, label }) => [code, label] as [string, string]);
+
+const VERDICT_DOT: Record<string, string> = {
+  VERIFIED: "history-dot-verified",
+  CONTRADICTED: "history-dot-contradicted",
+  UNVERIFIED: "history-dot-unverified",
+};
 
 export function VerificationChat({
   claim,
@@ -37,6 +45,8 @@ export function VerificationChat({
   isReporting,
   error,
   notice,
+  history,
+  onSelectHistory,
   verifyClaim,
   reportClaim,
   fileInputRef,
@@ -63,6 +73,8 @@ export function VerificationChat({
   isReporting: boolean;
   error: string;
   notice: string;
+  history: HistoryEntry[];
+  onSelectHistory: (id: string) => void;
   verifyClaim: () => void;
   reportClaim: () => void;
   fileInputRef: RefObject<HTMLInputElement>;
@@ -85,7 +97,36 @@ export function VerificationChat({
   }, [result, error, notice, isLoading]);
 
   return (
-    <section className="chat-shell chat-shell-no-sidebar" aria-label="SatyaSetu verification chat">
+    <section className="chat-shell" aria-label="SatyaSetu verification chat">
+      <div className="chat-sidebar">
+        <div>
+          <div className="text-xs font-black uppercase text-cyan-200/80">History</div>
+          <h2 className="mt-2 text-xl font-black text-white">Prompt chain</h2>
+        </div>
+        {history.length ? (
+          <div className="history-list">
+            {history.map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                className={`history-item ${entry.result === result ? "history-item-active" : ""}`}
+                onClick={() => onSelectHistory(entry.id)}
+              >
+                <span className={`history-dot ${VERDICT_DOT[entry.result.verdict] ?? "history-dot-unverified"}`} />
+                <span className="history-item-body">
+                  <span className="history-item-claim">{entry.claim}</span>
+                  <span className="history-item-meta">
+                    <Clock3 size={11} /> {new Date(entry.checkedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="history-empty">Verified claims from this session will show up here.</p>
+        )}
+      </div>
+
       <div className="chat-main">
         <div className="chat-header">
           <div>
