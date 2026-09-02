@@ -58,7 +58,7 @@ export default function WhatsAppPage() {
               />
               <button
                 className="modal-primary"
-                disabled={assistant.isLoading || assistant.claim.trim().length < 3}
+                disabled={assistant.isLoading}
                 onClick={() => assistant.verifyForwardedClaim(assistant.claim)}
               >
                 {assistant.isLoading ? <Loader2 className="animate-spin" size={19} /> : <Send size={19} />}

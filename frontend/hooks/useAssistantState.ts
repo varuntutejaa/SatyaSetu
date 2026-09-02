@@ -88,11 +88,23 @@ export function useAssistantState() {
 
   useEffect(() => {
     let cancelled = false;
+    // A single slow/dropped request (cold start, brief network blip) should
+    // never flip the indicator — only two failures in a row count as "down".
+    // Recovery stays immediate: any success clears the streak right away.
+    let consecutiveFailures = 0;
 
     function checkHealth() {
       getHealth()
-        .then(() => { if (!cancelled) setApiOnline(true); })
-        .catch(() => { if (!cancelled) setApiOnline(false); });
+        .then(() => {
+          if (cancelled) return;
+          consecutiveFailures = 0;
+          setApiOnline(true);
+        })
+        .catch(() => {
+          if (cancelled) return;
+          consecutiveFailures += 1;
+          if (consecutiveFailures >= 2) setApiOnline(false);
+        });
     }
 
     checkHealth();
@@ -254,7 +266,10 @@ export function useAssistantState() {
   }
 
   async function reportClaim() {
-    if (claim.trim().length < 3) return;
+    if (claim.trim().length < 3) {
+      setError(t("errors.claimTooShort"));
+      return;
+    }
     setIsReporting(true);
     setError("");
     setNotice("");

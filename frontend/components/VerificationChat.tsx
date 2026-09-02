@@ -233,7 +233,7 @@ export function VerificationChat({
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
-                if (!isLoading && claim.trim().length >= 3) verifyClaim();
+                if (!isLoading) verifyClaim();
               }
             }}
             placeholder={t("verify.placeholder")}
