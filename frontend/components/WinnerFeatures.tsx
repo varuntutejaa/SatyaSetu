@@ -12,7 +12,7 @@ export function WinnerFeatures() {
     <section className="winner-launchpad" aria-label="Fast verification tools">
       <Link href="/whatsapp" className="winner-action winner-action-primary">
         <span className="winner-action-icon"><MessageCircleMore size={22} /></span>
-        <span><strong>WhatsApp</strong><small>Forward a scheme message, screenshot or voice note</small></span>
+        <span><strong>WhatsApp</strong><small>Open the sandbox chat and send your scheme question</small></span>
         <span className="winner-arrow">01</span>
       </Link>
       <Link href="/voice-agent" className="winner-action winner-action-call">

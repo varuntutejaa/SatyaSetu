@@ -1,13 +1,23 @@
 "use client";
 
-import { Loader2, Mic, MessageCircleMore, Send, ShieldCheck, Upload } from "lucide-react";
+import { Copy, ExternalLink, MessageCircleMore, ShieldCheck } from "lucide-react";
+import { useState } from "react";
 
 import { TopNav } from "@/components/TopNav";
-import { EmptyResult, ResultPanel } from "@/components/ResultPanel";
 import { useAssistantState } from "@/hooks/useAssistantState";
+
+const SANDBOX_NUMBER = "+14155238886";
+const WHATSAPP_URL = "https://wa.me/14155238886";
 
 export default function WhatsAppPage() {
   const assistant = useAssistantState();
+  const [copied, setCopied] = useState(false);
+
+  async function copyNumber() {
+    await navigator.clipboard.writeText(SANDBOX_NUMBER);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1600);
+  }
 
   return (
     <main className="premium-shell assistant-shell">
@@ -19,70 +29,48 @@ export default function WhatsAppPage() {
       />
 
       <section className="hero-stage assistant-stage">
-        <div className="hero-mesh" />
-        <div className="relative z-10 mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
+        <div className="relative z-10 mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <div className="mx-auto mb-8 max-w-2xl text-center">
-            <span className="premium-pill hero-kicker"><MessageCircleMore size={14} /> WhatsApp channel</span>
-            <h1 className="hero-title hero-title-scheme">Forward to SatyaSetu</h1>
-            <p className="hero-subheadline">Check it before you trust it or send it on.</p>
+            <span className="premium-pill hero-kicker"><MessageCircleMore size={14} /> WhatsApp Help</span>
+            <h1 className="hero-title hero-title-scheme">Chat With SatyaSetu On WhatsApp</h1>
+            <p className="hero-subheadline">
+              Send a scheme message or question on WhatsApp and get a clear answer with official proof.
+            </p>
           </div>
 
-          <div className="mt-10 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
-            <section className="demo-panel">
-              <div className="channel-badge"><MessageCircleMore size={16} /> WhatsApp-ready verification</div>
-              <label className="modal-label" htmlFor="forwarded-message">Message you received</label>
-              <textarea
-                id="forwarded-message"
-                className="forward-textarea"
-                value={assistant.claim}
-                onChange={(event) => assistant.setClaim(event.target.value)}
-                placeholder="Paste the forwarded message here…"
-                autoFocus
-              />
-              <div className="forward-inputs">
-                <button onClick={() => assistant.fileInputRef.current?.click()}><Upload size={18} /> Screenshot</button>
-                <button className={assistant.recorder.state === "recording" ? "recording" : ""} onClick={assistant.toggleRecording}>
-                  <Mic size={18} /> {assistant.recorder.state === "recording" ? "Stop recording" : "Voice note"}
-                </button>
-              </div>
-              <input
-                ref={assistant.fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="hidden"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) assistant.verifyScreenshot(file);
-                  event.target.value = "";
-                }}
-              />
-              <button
-                className="modal-primary"
-                disabled={assistant.isLoading}
-                onClick={() => assistant.verifyForwardedClaim(assistant.claim)}
-              >
-                {assistant.isLoading ? <Loader2 className="animate-spin" size={19} /> : <Send size={19} />}
-                Check this message
+          <section className="whatsapp-redirect-card">
+            <div className="whatsapp-number-box">
+              <span>Sandbox number</span>
+              <strong>{SANDBOX_NUMBER}</strong>
+            </div>
+
+            <div className="whatsapp-actions">
+              <a className="whatsapp-open-button" href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer">
+                <MessageCircleMore size={20} />
+                Open WhatsApp Chat
+                <ExternalLink size={17} />
+              </a>
+              <button className="whatsapp-copy-button" onClick={copyNumber}>
+                <Copy size={18} />
+                {copied ? "Copied" : "Copy Number"}
               </button>
-              <p className="privacy-line"><ShieldCheck size={15} /> Screenshots are processed in memory and are not saved.</p>
-              {assistant.error ? <div className="error-strip"><ShieldCheck size={18} /> {assistant.error}</div> : null}
-              {assistant.notice ? <div className="error-strip notice-strip"><ShieldCheck size={18} /> {assistant.notice}</div> : null}
-            </section>
-            <section className={`demo-panel ${assistant.verdict?.className ?? ""}`}>
-              {assistant.result && assistant.verdict ? (
-                <ResultPanel
-                  result={assistant.result}
-                  verdict={assistant.verdict}
-                  t={assistant.t}
-                  isSpeaking={assistant.isSpeaking}
-                  playExplanation={assistant.playExplanation}
-                />
-              ) : (
-                <EmptyResult />
-              )}
-            </section>
-          </div>
-          <audio ref={assistant.audioRef} className="hidden" aria-hidden="true" />
+            </div>
+
+            <div className="whatsapp-steps">
+              <h2>How to chat</h2>
+              <ol>
+                <li>Tap “Open WhatsApp Chat”.</li>
+                <li>If WhatsApp asks, open the chat with {SANDBOX_NUMBER}.</li>
+                <li>Send your scheme message, fraud alert, or question.</li>
+                <li>Wait for SatyaSetu to reply with the result and proof.</li>
+              </ol>
+            </div>
+
+            <div className="whatsapp-example">
+              <div><ShieldCheck size={18} /> Example message</div>
+              <p>Is PM-KISAN giving eligible farmer families Rs 6,000 per year?</p>
+            </div>
+          </section>
         </div>
       </section>
     </main>

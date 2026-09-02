@@ -2340,3 +2340,121 @@ body,
   border-color: var(--gov-green);
   box-shadow: 0 0 0 3px rgba(19, 136, 8, 0.13);
 }
+
+.whatsapp-redirect-card {
+  border: 1px solid var(--gov-line);
+  border-top: 7px solid var(--gov-green);
+  border-radius: 22px;
+  background: #ffffff;
+  padding: 26px;
+  box-shadow: 0 10px 26px rgba(6, 31, 61, 0.13);
+}
+
+.whatsapp-number-box {
+  display: grid;
+  gap: 6px;
+  border: 1px solid #b9c7d6;
+  border-radius: 18px;
+  background: linear-gradient(90deg, #fff4df, #ffffff 52%, #e8f6ea);
+  padding: 20px;
+  text-align: center;
+}
+
+.whatsapp-number-box span {
+  color: #39536b;
+  font-size: 13px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.whatsapp-number-box strong {
+  color: var(--gov-navy);
+  font-size: clamp(30px, 7vw, 52px);
+  font-weight: 950;
+  line-height: 1;
+}
+
+.whatsapp-actions {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+@media (min-width: 640px) {
+  .whatsapp-actions {
+    grid-template-columns: 1fr auto;
+  }
+}
+
+.whatsapp-open-button,
+.whatsapp-copy-button {
+  display: inline-flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 16px;
+  font-weight: 950;
+}
+
+.whatsapp-open-button {
+  border: 1px solid var(--gov-green);
+  background: var(--gov-green);
+  color: #ffffff;
+}
+
+.whatsapp-copy-button {
+  border: 1px solid var(--gov-line);
+  background: #ffffff;
+  color: var(--gov-navy);
+  padding: 0 18px;
+}
+
+.whatsapp-steps {
+  margin-top: 22px;
+  border: 1px solid var(--gov-line);
+  border-radius: 18px;
+  background: #f8fbff;
+  padding: 20px;
+}
+
+.whatsapp-steps h2 {
+  color: var(--gov-navy);
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.whatsapp-steps ol {
+  margin: 14px 0 0;
+  padding-left: 22px;
+  color: #334e68;
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1.8;
+}
+
+.whatsapp-example {
+  margin-top: 18px;
+  border: 1px solid rgba(255, 140, 0, 0.40);
+  border-radius: 18px;
+  background: #fffaf0;
+  padding: 18px;
+}
+
+.whatsapp-example div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #9a4b00;
+  font-size: 13px;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.whatsapp-example p {
+  margin-top: 8px;
+  color: var(--gov-navy);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.45;
+}
