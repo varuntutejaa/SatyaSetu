@@ -2115,3 +2115,228 @@ a { text-decoration: none; }
 .voice-agent-modal {
   background: #0b2f57;
 }
+
+/* Indian government color pass: navy, saffron, white, green */
+:root {
+  --gov-navy: #061f3d;
+  --gov-blue: #075aa5;
+  --gov-saffron: #ff8c00;
+  --gov-green: #0b7d1f;
+  --gov-cream: #fff4df;
+  --gov-surface: #ffffff;
+  --gov-line: #b9c7d6;
+}
+
+body,
+.premium-shell {
+  background: #f7f9fc;
+}
+
+.premium-nav {
+  border-bottom: 2px solid rgba(6, 31, 61, 0.22);
+  background: rgba(255, 255, 255, 0.84);
+  box-shadow: none;
+  backdrop-filter: blur(16px);
+}
+
+.premium-nav::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 8px;
+  background: linear-gradient(180deg, var(--gov-saffron), #ffffff 48%, var(--gov-green));
+}
+
+.premium-nav nav a,
+.premium-nav nav .nav-link,
+.premium-nav .text-white {
+  color: var(--gov-navy) !important;
+  font-weight: 950;
+}
+
+.premium-nav nav a:hover,
+.premium-nav nav a:focus-visible,
+.premium-nav nav .nav-link:hover,
+.premium-nav nav .nav-link:focus-visible,
+.premium-nav nav .nav-link-active {
+  color: var(--gov-green);
+}
+
+.brand-orbit {
+  border-color: rgba(8, 47, 73, 0.16);
+  background: linear-gradient(180deg, #ffffff, #eef6ff);
+  color: var(--gov-navy);
+}
+
+.hero-stage {
+  background:
+    linear-gradient(90deg, rgba(255, 140, 0, 0.26), rgba(255, 255, 255, 0.88) 38%, rgba(11, 125, 31, 0.20)),
+    #f5f9ff;
+}
+
+.hero-stage::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 8px;
+  background: linear-gradient(90deg, var(--gov-saffron), #ffffff 50%, var(--gov-green));
+}
+
+.premium-pill,
+.hero-trust-row span {
+  border-color: rgba(6, 31, 61, 0.26);
+  background: #ffffff;
+  color: var(--gov-navy);
+}
+
+.premium-pill svg {
+  color: var(--gov-saffron);
+}
+
+.hero-title,
+.hero-title-scheme,
+.section-title {
+  color: var(--gov-navy);
+  font-weight: 950;
+}
+
+.hero-subheadline,
+.hero-access-heading {
+  color: #39536b;
+  font-weight: 750;
+}
+
+.hero-primary,
+.hero-primary-light,
+.send-button,
+.modal-primary {
+  border-color: var(--gov-green);
+  background: var(--gov-green);
+  color: #ffffff;
+  font-weight: 950;
+}
+
+.hero-secondary,
+.nav-voice-button,
+.connectivity-indicator {
+  border-color: rgba(6, 31, 61, 0.28);
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--gov-navy);
+  font-weight: 950;
+}
+
+.hero-example,
+.capability-card,
+.ops-board,
+.demo-panel,
+.governance-item,
+.flow-row,
+.ops-card,
+.mini-signal,
+.brand-chip,
+.chat-shell,
+.feature-modal,
+.winner-launchpad,
+.evidence-card,
+.message-card {
+  border-color: var(--gov-line);
+  background: var(--gov-surface);
+  box-shadow: 0 10px 26px rgba(6, 31, 61, 0.13);
+}
+
+.hero-example {
+  border-top: 7px solid var(--gov-saffron);
+}
+
+.section-wrap {
+  background: #ffffff;
+}
+
+.surface-band,
+.demo-band,
+.brand-strip {
+  background: linear-gradient(180deg, #fff4df, #ffffff 42%, #e8f6ea);
+}
+
+.section-eyebrow,
+.hero-example-source,
+.demo-chip:hover,
+.text-teal-700 {
+  color: var(--gov-green);
+  font-weight: 950;
+}
+
+.premium-pill,
+.hero-trust-row span,
+.brand-chip,
+.demo-chip,
+.status-pill,
+.verdict-badge,
+.result-row,
+.winner-action strong,
+.winner-action small,
+.capability-card h3,
+.flow-row h3,
+.ops-card div,
+.governance-item h3,
+.hero-example-label,
+.hero-example-verdict,
+.hero-example-claim,
+.hero-example-explanation,
+.hero-example-source,
+.message-card,
+.chat-tool,
+.voice-agent-status,
+.voice-agent-card,
+.voice-agent-primary,
+.voice-agent-secondary {
+  font-weight: 900;
+}
+
+.capability-icon,
+.flow-icon,
+.winner-action-icon {
+  background: #ffe2b8;
+  color: #9a4b00;
+}
+
+.flow-row:nth-child(even) .flow-icon,
+.capability-card:nth-child(even) .capability-icon {
+  background: #dff4e3;
+  color: var(--gov-green);
+}
+
+.board-live,
+.chat-live,
+.hero-example-verdict,
+.verdict-verified {
+  background: #dff4e3;
+  color: var(--gov-green);
+}
+
+.voice-agent-modal,
+.chat-sidebar,
+.hero-console {
+  background: linear-gradient(180deg, var(--gov-navy), #0b3d61);
+}
+
+.voice-agent-primary {
+  border-color: var(--gov-saffron);
+  background: var(--gov-saffron);
+  color: var(--gov-navy);
+}
+
+.voice-agent-language-row .voice-lang-active,
+.voice-agent-steps .voice-step-active {
+  border-color: rgba(255, 153, 51, 0.72);
+  background: rgba(255, 153, 51, 0.18);
+}
+
+.textarea:focus,
+.select:focus,
+.composer textarea:focus {
+  border-color: var(--gov-green);
+  box-shadow: 0 0 0 3px rgba(19, 136, 8, 0.13);
+}
