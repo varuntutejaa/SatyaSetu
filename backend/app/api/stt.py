@@ -12,7 +12,8 @@ MAX_AUDIO_MB = 10
 
 @router.post("/stt", response_model=STTResponse)
 async def speech_to_text(file: UploadFile = File(...), language_hint: str | None = Form(None)):
-    if file.content_type not in ALLOWED_MIME_TYPES:
+    content_type = (file.content_type or "").split(";")[0].strip().lower()
+    if content_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(status_code=400, detail="Unsupported audio format.")
 
     audio_bytes = await file.read()
@@ -20,7 +21,7 @@ async def speech_to_text(file: UploadFile = File(...), language_hint: str | None
         raise HTTPException(status_code=400, detail=f"Audio exceeds the {MAX_AUDIO_MB}MB limit.")
 
     try:
-        result = await SarvamSpeechProvider().transcribe(audio_bytes, file.content_type, language_hint)
+        result = await SarvamSpeechProvider().transcribe(audio_bytes, content_type, language_hint)
     except ProviderUnavailableError:
         raise HTTPException(
             status_code=503,

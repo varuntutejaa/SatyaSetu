@@ -3,6 +3,7 @@
 import { BadgeCheck, CheckCircle2, Clock3, ShieldCheck, SquareIcon, Volume2 } from "lucide-react";
 
 import type { VerifyResponse } from "@/services/api";
+import { resultHeading } from "@/lib/resultCopy";
 
 export function EmptyResult() {
   return (
@@ -45,7 +46,8 @@ export function ResultPanel({
           <span className="status-pill"><Clock3 size={14} /> {new Date(result.checkedAt).toLocaleTimeString()}</span>
         </div>
       </div>
-      <h3 className="text-2xl font-black text-slate-950">{result.summary}</h3>
+      <h3 className="text-2xl font-black text-slate-950">{resultHeading(result)}</h3>
+      <p className="mt-2 text-xs font-bold text-slate-500">Checked: {result.claim}</p>
       <p className="mt-3 text-sm leading-6 text-slate-700">{result.explanation}</p>
       {result.verdict === "UNVERIFIED" ? (
         <p className="mt-2 text-xs font-bold text-amber-700">{t("verdict.doNotTreatAsConfirmed")}</p>

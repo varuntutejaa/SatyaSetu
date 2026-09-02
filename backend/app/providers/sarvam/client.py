@@ -17,6 +17,14 @@ from app.providers.base import ProviderUnavailableError
 
 SARVAM_BASE_URL = "https://api.sarvam.ai"
 
+MIME_EXTENSIONS = {
+    "audio/wav": "wav",
+    "audio/webm": "webm",
+    "audio/mpeg": "mp3",
+    "audio/mp4": "m4a",
+    "audio/ogg": "ogg",
+}
+
 
 class SarvamClient:
     def __init__(self) -> None:
@@ -47,7 +55,9 @@ class SarvamClient:
         key = self._require_key()
         try:
             async with httpx.AsyncClient(timeout=30) as client:
-                files = {"file": ("audio.wav", audio_bytes, mime_type)}
+                clean_mime_type = mime_type.split(";")[0].strip().lower()
+                extension = MIME_EXTENSIONS.get(clean_mime_type, "webm")
+                files = {"file": (f"recording.{extension}", audio_bytes, clean_mime_type)}
                 data = {"model": self.stt_model}
                 if self.stt_model == "saaras:v3":
                     data["mode"] = "transcribe"

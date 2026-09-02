@@ -12,6 +12,7 @@ import type { LanguageCode } from "@/lib/i18n";
 import { speechToText, textToSpeech, verifyClaim } from "@/services/api";
 import type { VerifyResponse } from "@/services/api";
 import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
+import { resultHeading } from "@/lib/resultCopy";
 
 const NAV_LINKS = [
   { href: "/whatsapp", label: "WhatsApp" },
@@ -81,6 +82,7 @@ function useNavbarVoiceAgent() {
   const [transcript, setTranscript] = useState("");
   const [result, setResult] = useState<VerifyResponse | null>(null);
   const [status, setStatus] = useState("Tap the mic and speak a claim.");
+  const [step, setStep] = useState<"idle" | "listening" | "transcribing" | "checking" | "speaking" | "done">("idle");
   const [error, setError] = useState("");
   const [isWorking, setIsWorking] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -89,7 +91,7 @@ function useNavbarVoiceAgent() {
   const speakResult = useCallback(async (response: VerifyResponse, lang: LanguageCode) => {
     const spoken = [
       `Verdict: ${response.verdict === "UNVERIFIED" ? "Needs evidence" : response.verdict}.`,
-      response.summary,
+      resultHeading(response),
       response.explanation,
     ].join(" ").slice(0, 900);
 
@@ -104,17 +106,21 @@ function useNavbarVoiceAgent() {
   const processAudio = useCallback(async (blob: Blob) => {
     setIsWorking(true);
     setError("");
+    setStep("transcribing");
     setStatus("Understanding your voice...");
     try {
       const stt = await speechToText(blob, language);
       const spokenText = stt.text.trim();
       if (spokenText.length < 3) throw new Error("Could not hear a complete claim. Please try again.");
       setTranscript(spokenText);
+      setStep("checking");
       setStatus("Checking official proof...");
       const verified = await verifyClaim(spokenText, stt.language as LanguageCode || language);
       setResult(verified);
+      setStep("speaking");
       setStatus("Speaking the evidence-backed response...");
       await speakResult(verified, (stt.language as LanguageCode) || language);
+      setStep("done");
       setStatus("Done. You can ask another claim.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not check this by voice. Please try again.");
@@ -135,11 +141,13 @@ function useNavbarVoiceAgent() {
     }
     setTranscript("");
     setResult(null);
+    setStep("listening");
     setStatus(`Listening for up to ${MAX_RECORDING_SECONDS} seconds...`);
     const started = await recorder.start();
     if (!started) {
       setStatus("Microphone is blocked. Allow mic access in the browser and try again.");
       setError("Microphone permission was denied or is unavailable on this browser.");
+      setStep("idle");
     }
   }
 
@@ -168,6 +176,7 @@ function useNavbarVoiceAgent() {
     error,
     isWorking,
     isSpeaking,
+    step,
     toggleRecording,
     stopSpeaking,
     audioRef,
@@ -186,6 +195,7 @@ function NavbarVoiceAgent({
   error,
   isWorking,
   isSpeaking,
+  step,
   toggleRecording,
   stopSpeaking,
   audioRef,
@@ -230,6 +240,12 @@ function NavbarVoiceAgent({
         </div>
 
         <p className="voice-agent-status">{status}</p>
+        <div className="voice-agent-steps" aria-label="Voice check progress">
+          <span className={step === "listening" ? "voice-step-active" : ""}>Listening</span>
+          <span className={step === "transcribing" ? "voice-step-active" : ""}>Transcribing</span>
+          <span className={step === "checking" ? "voice-step-active" : ""}>Checking</span>
+          <span className={step === "speaking" ? "voice-step-active" : ""}>Speaking</span>
+        </div>
         <p className="voice-agent-limit">Recording stops after {MAX_RECORDING_SECONDS} seconds so it stays quick and simple.</p>
 
         <button type="button" className="voice-agent-primary" onClick={toggleRecording} disabled={isWorking || recorderState === "processing"}>
@@ -255,7 +271,8 @@ function NavbarVoiceAgent({
         {result ? (
           <div className="voice-agent-card voice-agent-result">
             <span><BadgeCheck size={15} /> {verdictLabel} · {result.confidence}</span>
-            <h3>{result.summary}</h3>
+            <h3>{resultHeading(result)}</h3>
+            <p>Checked: {result.claim}</p>
             <p>{result.explanation}</p>
             <small>{result.sourceCount} official source{result.sourceCount === 1 ? "" : "s"} checked.</small>
           </div>

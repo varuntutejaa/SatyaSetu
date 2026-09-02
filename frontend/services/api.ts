@@ -124,9 +124,21 @@ export function submitReport(claimText: string, reportType = "SUSPICIOUS", seenB
 
 export type STTResponse = { text: string; language: string; confidence: number };
 
+function audioFileName(audioBlob: Blob) {
+  const mimeType = audioBlob.type.split(";")[0];
+  const extension = {
+    "audio/wav": "wav",
+    "audio/webm": "webm",
+    "audio/mpeg": "mp3",
+    "audio/mp4": "m4a",
+    "audio/ogg": "ogg",
+  }[mimeType] ?? "webm";
+  return `recording.${extension}`;
+}
+
 export function speechToText(audioBlob: Blob, languageHint?: string) {
   const form = new FormData();
-  form.append("file", audioBlob, "recording.webm");
+  form.append("file", audioBlob, audioFileName(audioBlob));
   if (languageHint) form.append("language_hint", languageHint);
   return request<STTResponse>("/api/stt", { method: "POST", body: form });
 }

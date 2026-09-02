@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { TopNav } from "@/components/TopNav";
 import { useAssistantState } from "@/hooks/useAssistantState";
+import { resultHeading } from "@/lib/resultCopy";
 
 export default function EvidenceReceiptPage() {
   const assistant = useAssistantState();
@@ -57,7 +58,7 @@ function ReceiptCard({ result }: { result: NonNullable<ReturnType<typeof useAssi
   const [copied, setCopied] = useState(false);
   const source = result.evidence[0];
   const receiptText = useMemo(
-    () => `SatyaSetu: ${result.verdict}\n${result.summary}\nConfidence: ${result.confidence}\n${source ? `Official source: ${source.source_domain}` : "No authoritative source confirmed this claim."}\nChecked: ${new Date(result.checkedAt).toLocaleString()}`,
+    () => `SatyaSetu: ${result.verdict}\n${resultHeading(result)}\nChecked claim: ${result.claim}\nConfidence: ${result.confidence}\n${source ? `Official source: ${source.source_domain}` : "No authoritative source confirmed this claim."}\nChecked: ${new Date(result.checkedAt).toLocaleString()}`,
     [result, source],
   );
 
@@ -89,7 +90,8 @@ function ReceiptCard({ result }: { result: NonNullable<ReturnType<typeof useAssi
       <article className={`evidence-receipt ${verdictClass}`} id="evidence-receipt">
         <div className="receipt-brand"><span><ShieldCheck size={18} /> SatyaSetu</span><small>Evidence before belief</small></div>
         <div className="receipt-verdict">{result.verdict === "UNVERIFIED" ? "NEEDS EVIDENCE" : result.verdict}</div>
-        <h3>{result.summary}</h3>
+        <h3>{resultHeading(result)}</h3>
+        <p className="receipt-claim">Checked: {result.claim}</p>
         <p>{result.explanation}</p>
         <div className="receipt-grid">
           <div><small>Confidence</small><strong>{result.confidence}</strong></div>

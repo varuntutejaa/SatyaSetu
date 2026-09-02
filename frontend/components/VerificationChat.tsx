@@ -22,6 +22,7 @@ import type { SourceOut, VerifyResponse } from "@/services/api";
 import { SUPPORTED_LANGUAGES } from "@/lib/i18n";
 import type { LanguageCode } from "@/lib/i18n";
 import type { HistoryEntry } from "@/hooks/useAssistantState";
+import { resultHeading } from "@/lib/resultCopy";
 
 const languages = SUPPORTED_LANGUAGES.map(({ code, label }) => [code, label] as [string, string]);
 
@@ -210,7 +211,8 @@ export function VerificationChat({
                     {isSpeaking ? <SquareIcon size={14} /> : <Volume2 size={14} />}
                   </button>
                 </div>
-                <h3 className="text-lg font-black text-slate-950">{result.summary}</h3>
+                <h3 className="text-lg font-black text-slate-950">{resultHeading(result)}</h3>
+                <p className="mt-1 text-xs font-bold text-slate-500">Checked: {result.claim}</p>
                 <p className="mt-2 text-sm leading-6 text-slate-700">{result.explanation}</p>
                 {result.confidenceFactors?.length ? (
                   <ul className="mt-3 grid gap-1">
@@ -241,11 +243,13 @@ export function VerificationChat({
           ) : null}
         </div>
 
-        <div className="prompt-row">
-          {demoClaims.slice(0, 3).map((item) => (
-            <button className="prompt-pill" key={item} onClick={() => setClaim(item)}>{item}</button>
-          ))}
-        </div>
+        {sentClaim ? null : (
+          <div className="prompt-row">
+            {demoClaims.slice(0, 3).map((item) => (
+              <button className="prompt-pill" key={item} onClick={() => setClaim(item)}>{item}</button>
+            ))}
+          </div>
+        )}
 
         <input
           ref={fileInputRef}

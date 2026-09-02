@@ -82,7 +82,7 @@ def run_verification(claim_text: str, evidence: list[dict], assessments: list[di
     confidence, factors = compute_confidence(decisive, has_conflict)
 
     explanation = _build_explanation(verdict, decisive, claim_text)
-    summary = claim_text if len(claim_text) <= 220 else claim_text[:217] + "..."
+    summary = _build_summary(verdict, decisive)
     source_count = len({e["source_id"] for e in merged})
     freshness = _freshness_note(merged)
     how_verified = _how_verified(claim_text, merged, decisive, verdict, source_count)
@@ -99,6 +99,18 @@ def run_verification(claim_text: str, evidence: list[dict], assessments: list[di
         confidence_factors=factors,
         how_verified=how_verified,
     )
+
+
+def _build_summary(verdict: str, decisive: list[dict]) -> str:
+    if verdict == "VERIFIED":
+        top = max(decisive, key=lambda e: e["relevance_score"])
+        return f"This is verified by {top['source_name']}."
+    if verdict == "CONTRADICTED":
+        top = max(decisive, key=lambda e: e["relevance_score"])
+        return f"This conflicts with {top['source_name']}."
+    if decisive:
+        return "Official sources do not give one clear answer yet."
+    return "This cannot be confirmed from official sources yet."
 
 
 def _build_explanation(verdict: str, decisive: list[dict], claim_text: str) -> str:

@@ -29,6 +29,8 @@ def test_authoritative_support_is_verified():
     assessments = [{"evidence_id": "chunk-1", "relationship": "SUPPORTS", "reason": "matches"}]
     result = run_verification("claim", evidence, assessments)
     assert result.verdict == "VERIFIED"
+    assert result.claim_summary == "This is verified by Test Source."
+    assert result.claim_summary != "claim"
 
 
 def test_authoritative_contradiction_is_contradicted():
@@ -40,6 +42,8 @@ def test_authoritative_contradiction_is_contradicted():
     assessments = [{"evidence_id": "chunk-1", "relationship": "CONTRADICTS", "reason": "mismatch"}]
     result = run_verification("claim", evidence, assessments)
     assert result.verdict == "CONTRADICTED"
+    assert result.claim_summary == "This conflicts with Test Source."
+    assert result.claim_summary != "claim"
 
 
 def test_unknown_source_cannot_independently_verify():
