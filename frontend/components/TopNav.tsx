@@ -3,7 +3,8 @@
 import { AlertCircle, BadgeCheck, Loader2, Mic, ShieldCheck, SquareIcon, Volume2, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { ConnectivityIndicator } from "@/components/ConnectivityIndicator";
 import { SUPPORTED_LANGUAGES, useLanguage } from "@/lib/i18n";
@@ -14,8 +15,8 @@ import { useVoiceRecorder } from "@/hooks/useVoiceRecorder";
 
 const NAV_LINKS = [
   { href: "/whatsapp", label: "WhatsApp" },
-  { href: "/assistant", label: "AI Assistant" },
-  { href: "/evidence-receipt", label: "Evidence Receipt" },
+  { href: "/assistant", label: "Ask Assistant" },
+  { href: "/evidence-receipt", label: "Proof Receipt" },
 ];
 
 const MAX_RECORDING_SECONDS = 12;
@@ -38,11 +39,11 @@ export function TopNav({
     <header className="premium-nav">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-5 px-4 py-4 sm:px-6 lg:px-8">
         <Link className="flex items-center gap-3" href="/" aria-label="SatyaSetu home">
-          <div className="brand-orbit"><ShieldCheck size={21} /></div>
-          <div>
-            <div className="text-base font-black text-white">SatyaSetu</div>
-            <div className="text-xs font-bold text-cyan-100/75">National trust infrastructure</div>
-          </div>
+            <div className="brand-orbit"><ShieldCheck size={21} /></div>
+            <div>
+              <div className="text-base font-black text-white">SatyaSetu</div>
+              <div className="text-xs font-bold text-cyan-100/75">Check before you trust</div>
+            </div>
         </Link>
         <nav className="hidden items-center gap-7 text-sm font-bold text-cyan-50/78 lg:flex">
           <button
@@ -50,7 +51,7 @@ export function TopNav({
             className={`nav-link nav-button ${voiceAgent.open ? "nav-link-active" : ""}`}
             onClick={voiceAgent.openAgent}
           >
-            Voice Agent
+            Speak To Check
           </button>
           {NAV_LINKS.map((link) => (
             <Link
@@ -103,20 +104,20 @@ function useNavbarVoiceAgent() {
   const processAudio = useCallback(async (blob: Blob) => {
     setIsWorking(true);
     setError("");
-    setStatus("Transcribing with Sarvam...");
+    setStatus("Understanding your voice...");
     try {
       const stt = await speechToText(blob, language);
       const spokenText = stt.text.trim();
       if (spokenText.length < 3) throw new Error("Could not hear a complete claim. Please try again.");
       setTranscript(spokenText);
-      setStatus("Checking official evidence through the RAG pipeline...");
+      setStatus("Checking official proof...");
       const verified = await verifyClaim(spokenText, stt.language as LanguageCode || language);
       setResult(verified);
       setStatus("Speaking the evidence-backed response...");
       await speakResult(verified, (stt.language as LanguageCode) || language);
       setStatus("Done. You can ask another claim.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Voice agent failed. Check SARVAM_API_KEY and backend status.");
+      setError(err instanceof Error ? err.message : "Could not check this by voice. Please try again.");
       setStatus("Tap the mic and try again.");
     } finally {
       setIsWorking(false);
@@ -135,8 +136,11 @@ function useNavbarVoiceAgent() {
     setTranscript("");
     setResult(null);
     setStatus(`Listening for up to ${MAX_RECORDING_SECONDS} seconds...`);
-    await recorder.start();
-    if (recorder.error) setError(recorder.error);
+    const started = await recorder.start();
+    if (!started) {
+      setStatus("Microphone is blocked. Allow mic access in the browser and try again.");
+      setError("Microphone permission was denied or is unavailable on this browser.");
+    }
   }
 
   function stopSpeaking() {
@@ -144,10 +148,17 @@ function useNavbarVoiceAgent() {
     setIsSpeaking(false);
   }
 
+  function closeAgent() {
+    if (recorder.state === "recording") void recorder.stop();
+    audioRef.current?.pause();
+    setIsSpeaking(false);
+    setOpen(false);
+  }
+
   return {
     open,
     openAgent: () => setOpen(true),
-    closeAgent: () => setOpen(false),
+    closeAgent,
     language,
     setLanguage,
     recorderState: recorder.state,
@@ -179,20 +190,24 @@ function NavbarVoiceAgent({
   stopSpeaking,
   audioRef,
 }: ReturnType<typeof useNavbarVoiceAgent>) {
+  const [mounted, setMounted] = useState(false);
   const verdictLabel = useMemo(() => {
     if (!result) return "Awaiting claim";
     return result.verdict === "UNVERIFIED" ? "Needs evidence" : result.verdict;
   }, [result]);
 
-  if (!open) return <audio ref={audioRef} className="hidden" aria-hidden="true" />;
+  useEffect(() => setMounted(true), []);
 
-  return (
+  if (!open) return <audio ref={audioRef} className="hidden" aria-hidden="true" />;
+  if (!mounted) return null;
+
+  return createPortal(
     <div className="voice-agent-backdrop" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeAgent()}>
       <section className="voice-agent-modal" role="dialog" aria-modal="true" aria-labelledby="voice-agent-title">
         <div className="voice-agent-head">
           <div>
-            <p>Sarvam voice agent</p>
-            <h2 id="voice-agent-title">Speak in any supported language</h2>
+        <p>Voice help</p>
+        <h2 id="voice-agent-title">Speak your question</h2>
           </div>
           <button type="button" onClick={closeAgent} aria-label="Close voice agent"><X size={20} /></button>
         </div>
@@ -215,11 +230,11 @@ function NavbarVoiceAgent({
         </div>
 
         <p className="voice-agent-status">{status}</p>
-        <p className="voice-agent-limit">Mic auto-stops at {MAX_RECORDING_SECONDS}s to keep Sarvam calls minimal: STT once, RAG once, TTS once.</p>
+        <p className="voice-agent-limit">Recording stops after {MAX_RECORDING_SECONDS} seconds so it stays quick and simple.</p>
 
         <button type="button" className="voice-agent-primary" onClick={toggleRecording} disabled={isWorking || recorderState === "processing"}>
           {recorderState === "recording" ? <SquareIcon size={18} /> : <Mic size={18} />}
-          {recorderState === "recording" ? "Stop and verify" : "Start voice verification"}
+          {recorderState === "recording" ? "Stop and check" : "Start speaking"}
         </button>
 
         {isSpeaking ? (
@@ -242,12 +257,14 @@ function NavbarVoiceAgent({
             <span><BadgeCheck size={15} /> {verdictLabel} · {result.confidence}</span>
             <h3>{result.summary}</h3>
             <p>{result.explanation}</p>
-            <small>{result.sourceCount} official source{result.sourceCount === 1 ? "" : "s"} checked through RAG.</small>
+            <small>{result.sourceCount} official source{result.sourceCount === 1 ? "" : "s"} checked.</small>
           </div>
         ) : null}
 
         <audio ref={audioRef} className="hidden" aria-hidden="true" />
       </section>
     </div>
+    ,
+    document.body,
   );
 }

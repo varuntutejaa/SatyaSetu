@@ -37,17 +37,17 @@ import { useAssistantState } from "@/hooks/useAssistantState";
 const languages = SUPPORTED_LANGUAGES.map(({ code, label }) => [code, label] as [string, string]);
 
 const flowSteps = [
-  { icon: ScanText, title: "Capture", text: "Voice, screenshot, pasted forward, kiosk entry, or field worker submission enters one queue." },
-  { icon: Database, title: "Ground", text: "Claims are matched against curated government, health, financial, and education sources." },
-  { icon: FileSearch, title: "Compare", text: "Evidence is classified as supporting, contradicting, or neutral with relevance and freshness signals." },
-  { icon: ShieldCheck, title: "Decide", text: "A deterministic engine calculates verdicts, confidence, limitations, and citizen-readable explanations." },
+  { icon: ScanText, title: "Send A Claim", text: "Share a message, screenshot, or voice note." },
+  { icon: Database, title: "Check Proof", text: "We look for the right official information." },
+  { icon: FileSearch, title: "Compare Details", text: "Benefits, dates, links, and conditions are checked." },
+  { icon: ShieldCheck, title: "Get An Answer", text: "See what is true, what is unclear, and where to read more." },
 ];
 
 const channels = [
-  ["WhatsApp desks", "Verify viral forwards before they spread across a block or district."],
-  ["CSC kiosks", "Give operators a fast claim check with printable evidence notes."],
-  ["Field teams", "Sync offline reports from ASHA, panchayat, NGO, and campaign workers."],
-  ["Command rooms", "Track misinformation categories, source gaps, and escalation patterns."],
+  ["WhatsApp", "Check forwarded messages."],
+  ["Kiosk", "Help citizens at service centers."],
+  ["Field Teams", "Use voice during outreach."],
+  ["Dashboard", "Track common questions."],
 ];
 
 export default function Home() {
@@ -100,22 +100,21 @@ export default function Home() {
         <div className="relative z-10 mx-auto max-w-7xl px-4 pb-6 pt-5 sm:px-6 sm:pb-14 sm:pt-10 lg:px-8 lg:pb-20 lg:pt-16">
           <div className="hero-split">
             <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
-              <span className="premium-pill hero-kicker"><Landmark size={14} /> Government Scheme Verification</span>
+              <span className="premium-pill hero-kicker"><Landmark size={14} /> Official Scheme Help</span>
               <h1 className="hero-title hero-title-scheme">
-                Verify Any Government Scheme.<br />Trust the Official Source.
+                Know What Is Real.<br />Before You Act.
               </h1>
               <p className="hero-subheadline">
-                Check government scheme messages, eligibility claims, benefits, deadlines, and
-                application information against verified official sources.
+                Check scheme benefits, eligibility, deadlines, and fraud messages in simple language with official proof.
               </p>
               <div className="hero-trust-row lg:justify-start">
-                <span><Landmark size={14} /> Government schemes</span>
-                <span><ShieldCheck size={14} /> Official sources</span>
-                <span><Fingerprint size={14} /> Evidence-backed</span>
-                <span><Mic size={14} /> Voice + regional languages</span>
+                <span><Landmark size={14} /> Schemes</span>
+                <span><ShieldCheck size={14} /> Official proof</span>
+                <span><Fingerprint size={14} /> Clear answer</span>
+                <span><Mic size={14} /> Speak your question</span>
               </div>
               <div className="mt-4 flex flex-col gap-3 sm:mt-6 sm:flex-row">
-                <button type="button" className="hero-primary" onClick={revealLaunchpad}>Verify a Scheme <ArrowRight size={18} /></button>
+                <button type="button" className="hero-primary" onClick={revealLaunchpad}>Start Verification <ArrowRight size={18} /></button>
               </div>
             </div>
 
@@ -125,7 +124,7 @@ export default function Home() {
           <div id="launchpad" className={showLaunchpad ? "mx-auto mt-10 max-w-5xl scroll-mt-24" : "scroll-mt-24"}>
           {showLaunchpad ? (
             <>
-              <p className="hero-access-heading">One government-scheme verification service — however you reach it:</p>
+              <p className="hero-access-heading">Choose how you want to check:</p>
               <div className="mx-auto mt-3 max-w-5xl">
                 <WinnerFeatures />
               </div>
@@ -138,7 +137,7 @@ export default function Home() {
 
       <section className="brand-strip">
         <div className="mx-auto grid max-w-7xl gap-3 px-4 py-5 sm:px-6 md:grid-cols-4 lg:px-8">
-          {["District administration", "Public health teams", "Financial safety cells", "Rural service networks"].map((item) => (
+          {["For citizens", "For service centers", "For field workers", "For district teams"].map((item) => (
             <div className="brand-chip" key={item}>{item}</div>
           ))}
         </div>
@@ -146,18 +145,18 @@ export default function Home() {
 
       <section id="platform" className="section-wrap">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader eyebrow="Platform" title="A serious verification stack, not a chatbot wrapper." text="Every screen is built around auditability: source lineage, confidence logic, freshness, limitations, and human escalation." />
+          <SectionHeader eyebrow="Why Use It" title="Get a clear answer before you share or pay." text="Avoid fake links, false promises, and confusing scheme messages." />
           <div className="mt-10 grid gap-4 lg:grid-cols-3">
-            <Capability icon={Fingerprint} title="Deterministic verdict engine" text="LLMs can classify evidence, but fixed policy rules decide verified, contradicted, or unverified outcomes." />
-            <Capability icon={Languages} title="Multilingual citizen layer" text="Field teams can move between typed, spoken, translated, and simplified outputs without changing the evidence record." />
-            <Capability icon={LockKeyhole} title="Privacy-first operations" text="Screenshots are processed in memory, keys stay server-side, and reports never override source-backed truth." />
+            <Capability icon={Fingerprint} title="No Guesswork" text="Answers are shown with proof, so you know why to trust them." />
+            <Capability icon={Languages} title="Use Your Language" text="Type, speak, or listen in the language you are comfortable with." />
+            <Capability icon={LockKeyhole} title="Safe To Use" text="Your uploads are handled carefully and only used to check the claim." />
           </div>
         </div>
       </section>
 
       <section id="flows" className="section-wrap surface-band">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader eyebrow="Operating flows" title="From rumor intake to command-center intelligence." text="The product is designed for institutions that need reliable workflows across phones, kiosks, and district dashboards." />
+          <SectionHeader eyebrow="How It Works" title="Ask once. Get proof." text="The process is simple for citizens and useful for teams helping people on the ground." />
           <div className="mt-10 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="flow-stack">
               {flowSteps.map((step, index) => {
@@ -177,8 +176,8 @@ export default function Home() {
             <div className="ops-board">
               <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
                 <div>
-                  <div className="text-sm font-black text-slate-950">Misinformation operations</div>
-                  <div className="text-xs font-bold text-slate-500">District view · live categories</div>
+                  <div className="text-sm font-black text-slate-950">Common Questions</div>
+                  <div className="text-xs font-bold text-slate-500">Messages, claims, and alerts</div>
                 </div>
                 <span className="board-live"><Zap size={14} /> Active</span>
               </div>
@@ -205,28 +204,28 @@ export default function Home() {
       <section id="governance" className="section-wrap">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[0.85fr_1.15fr] lg:px-8">
           <div>
-            <p className="section-eyebrow">Governance layer</p>
-            <h2 className="section-title">Designed for buyers who ask hard questions.</h2>
+            <p className="section-eyebrow">Trust</p>
+            <h2 className="section-title">Made for important public information.</h2>
             <p className="mt-5 text-base leading-8 text-slate-600">
-              High-stakes public communication cannot depend on opaque answer generation. SatyaSetu exposes the operational record behind every verdict.
+              People should not lose money, miss benefits, or share false messages because information is unclear.
             </p>
           </div>
           <div className="governance-grid">
-            <GovernanceItem title="Source registry" text="Curated domains with category, authority, freshness, and retrieval metadata." />
-            <GovernanceItem title="Explainable confidence" text="Confidence comes from evidence quality and policy logic, not model bravado." />
-            <GovernanceItem title="Human escalation" text="Unverified and high-impact claims can route to moderators or official communication cells." />
-            <GovernanceItem title="Deployment control" text="Runs locally for demos, with a clean path to cloud, VPC, or government data-center hosting." />
+            <GovernanceItem title="Official Links" text="Users can open the source and read the original information." />
+            <GovernanceItem title="Simple Result" text="Every answer says verified, contradicted, or needs more evidence." />
+            <GovernanceItem title="Review When Needed" text="Unclear or sensitive claims can be checked again by a person." />
+            <GovernanceItem title="Works In The Field" text="Built for phones, kiosks, and teams helping citizens directly." />
           </div>
         </div>
       </section>
 
       <section id="demo" className="section-wrap demo-band">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <SectionHeader eyebrow="Live product" title="Run the verification flow." text="Use a seeded claim or paste your own. The landing page keeps selling while the product proves the core loop." />
+          <SectionHeader eyebrow="Try It" title="Check a claim now." text="Paste a message or choose an example. You will get a clear answer with proof." />
           <div className="mt-10 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
             <section className="demo-panel">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-xl font-black text-slate-950">Claim intake</h3>
+                <h3 className="text-xl font-black text-slate-950">Your Message</h3>
                 <select className="select" value={language} onChange={(event) => setLanguage(event.target.value as LanguageCode)} aria-label="Language">
                   {languages.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
                 </select>
@@ -273,15 +272,14 @@ function HeroExample() {
   return (
     <div className="hero-example">
       <div className="hero-example-top">
-        <span className="hero-example-label">Example verification</span>
+        <span className="hero-example-label">Example</span>
         <span className="hero-example-verdict"><BadgeCheck size={16} /> VERIFIED</span>
       </div>
       <p className="hero-example-claim">
-        "PM-KISAN is giving ₹6,000 to every eligible farmer family. Is this true?"
+        "PM-KISAN gives ₹6,000 to eligible farmer families. Is this true?"
       </p>
       <p className="hero-example-explanation">
-        Official source confirms: PM-KISAN gives eligible small and marginal farmer families
-        ₹6,000 per year — matching the claim.
+        Yes. Official information confirms the benefit amount for eligible farmer families.
       </p>
       <div className="hero-example-source">
         <ShieldCheck size={15} />
@@ -328,4 +326,3 @@ function GovernanceItem({ title, text }: { title: string; text: string }) {
     </div>
   );
 }
-

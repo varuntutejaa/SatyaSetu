@@ -100,8 +100,8 @@ export function VerificationChat({
     <section className="chat-shell" aria-label="SatyaSetu verification chat">
       <div className="chat-sidebar">
         <div>
-          <div className="text-xs font-black uppercase text-cyan-200/80">History</div>
-          <h2 className="mt-2 text-xl font-black text-white">Prompt chain</h2>
+          <div className="text-xs font-black uppercase text-cyan-200/80">Recent Checks</div>
+          <h2 className="mt-2 text-xl font-black text-white">Your questions</h2>
         </div>
         {history.length ? (
           <div className="history-list">
@@ -139,7 +139,7 @@ export function VerificationChat({
             </select>
             <span className={apiOnline && connectivity !== "offline" ? "chat-live" : "chat-offline"}>
               {connectivity === "offline" ? <WifiOff size={13} /> : <Zap size={13} />}
-              {connectivity === "offline" ? t("connectivity.offline") : apiOnline ? "API live" : "API offline"}
+              {connectivity === "offline" ? t("connectivity.offline") : apiOnline ? "Ready" : "Reconnecting"}
             </span>
           </div>
         </div>
@@ -288,10 +288,9 @@ export function VerificationChat({
             {isReporting ? <Loader2 className="animate-spin" size={15} /> : <AlertCircle size={15} />}
             {t("report.suspicious")}
           </button>
-          <span>{sources.length ? `${sources.length} sources synced` : "Sources load when backend is online"}</span>
+          <span>{sources.length ? `${sources.length} official sources ready` : "Official sources will appear when connected"}</span>
         </div>
       </div>
     </section>
   );
 }
-

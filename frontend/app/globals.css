@@ -625,6 +625,7 @@ a { text-decoration: none; }
 .chat-shell {
   display: grid;
   grid-template-columns: 250px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   min-height: 500px;
   max-height: min(760px, 82vh);
   overflow: hidden;
@@ -1739,6 +1740,24 @@ a { text-decoration: none; }
 
 @media (max-width: 640px) {
   .premium-nav { position: static; }
+  .voice-agent-backdrop {
+    align-items: end;
+    padding: 12px;
+  }
+  .voice-agent-modal {
+    width: 100%;
+    max-height: 88vh;
+    border-radius: 24px;
+    padding: 18px;
+  }
+  .voice-agent-head h2 {
+    font-size: 24px;
+  }
+  .voice-agent-orb {
+    height: 132px;
+    width: 132px;
+    margin: 20px auto 14px;
+  }
   .hero-title { font-size: 30px; line-height: 1; }
   .hero-points { gap: 6px; margin-top: 12px; }
   .hero-points li { font-size: 12.5px; line-height: 1.3; gap: 6px; }
@@ -1864,4 +1883,210 @@ a { text-decoration: none; }
   border-color: rgba(15,118,110,0.28);
   background: #f0fdfa;
   color: #0f766e;
+}
+
+/* Government landing page consistency pass */
+.premium-shell {
+  background: #f5f7fb;
+}
+
+.premium-nav {
+  border-bottom: 1px solid rgba(11, 47, 87, 0.12);
+  background: transparent;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.10);
+  backdrop-filter: none;
+}
+
+.premium-nav nav a,
+.premium-nav nav .nav-link {
+  color: #0f2744;
+  text-shadow: none;
+}
+
+.premium-nav nav a:hover,
+.premium-nav nav a:focus-visible,
+.premium-nav nav .nav-link:hover,
+.premium-nav nav .nav-link:focus-visible,
+.premium-nav nav .nav-link-active {
+  color: #0b5cab;
+  text-shadow: none;
+}
+
+.premium-nav .text-white {
+  color: #0f2744 !important;
+}
+
+.premium-nav .text-cyan-100\/75 {
+  color: #52667b !important;
+}
+
+.brand-orbit {
+  border-color: #c8d8e8;
+  background: #ffffff;
+  color: #0b2f57;
+  box-shadow: none;
+}
+
+.nav-voice-button,
+.connectivity-indicator {
+  border-color: rgba(11, 47, 87, 0.18);
+  background: rgba(255, 255, 255, 0.58);
+  color: #0f2744;
+}
+
+.hero-stage {
+  min-height: auto;
+  background: #eef4fb;
+}
+
+.hero-mesh {
+  display: none;
+}
+
+.premium-pill,
+.hero-trust-row span {
+  border-color: #c8d8e8;
+  background: #ffffff;
+  color: #17446f;
+  box-shadow: none;
+}
+
+.hero-title,
+.hero-title-scheme {
+  color: #0f2744;
+}
+
+.hero-subheadline,
+.hero-access-heading {
+  color: #41566d;
+}
+
+.hero-primary,
+.hero-primary-light {
+  border-color: #0b5cab;
+  background: #0b5cab;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.hero-secondary {
+  border-color: #b8c8d9;
+  background: #ffffff;
+  color: #0b2f57;
+}
+
+.hero-trust-row svg,
+.hero-example-source svg {
+  color: #0b5cab;
+}
+
+.hero-example {
+  border-color: #c8d8e8;
+  background: #ffffff;
+  box-shadow: 0 12px 32px rgba(15, 39, 68, 0.10);
+}
+
+.hero-example-label,
+.hero-example-explanation,
+.hero-example-source em {
+  color: #52667b;
+}
+
+.hero-example-claim,
+.hero-example-result h3 {
+  color: #0f2744;
+}
+
+.hero-example-verdict,
+.board-live,
+.chat-live {
+  background: #e7f6ee;
+  color: #11633d;
+}
+
+.hero-example-source {
+  border-top-color: #e1e8f0;
+  color: #17446f;
+}
+
+.brand-strip,
+.section-wrap,
+.demo-band,
+.surface-band {
+  background: #ffffff;
+}
+
+.section-eyebrow {
+  color: #0b5cab;
+}
+
+.section-title {
+  color: #0f2744;
+}
+
+.capability-card,
+.ops-board,
+.demo-panel,
+.governance-item,
+.flow-row,
+.ops-card,
+.mini-signal,
+.brand-chip,
+.chat-shell,
+.feature-modal,
+.winner-launchpad {
+  border-color: #d7dee8;
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(15, 39, 68, 0.07);
+}
+
+.capability-icon,
+.flow-icon {
+  background: #e8f2fc;
+  color: #0b5cab;
+}
+
+.flow-index {
+  color: #6d7f91;
+}
+
+.textarea,
+.select,
+.demo-chip,
+.icon-button,
+.composer textarea,
+.composer-icon {
+  border-color: #cfd9e5;
+  background: #ffffff;
+  color: #0f2744;
+}
+
+.textarea:focus,
+.select:focus,
+.composer textarea:focus {
+  border-color: #0b5cab;
+  box-shadow: 0 0 0 3px rgba(11, 92, 171, 0.14);
+}
+
+.status-pill,
+.verdict-badge,
+.result-row {
+  border-color: #d7dee8;
+  background: #ffffff;
+  color: #334e68;
+}
+
+.send-button {
+  border-color: #0b5cab;
+  background: #0b5cab;
+}
+
+.chat-main {
+  background: #ffffff;
+}
+
+.chat-sidebar,
+.hero-console,
+.voice-agent-modal {
+  background: #0b2f57;
 }

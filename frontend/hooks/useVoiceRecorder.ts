@@ -44,13 +44,23 @@ export function useVoiceRecorder(maxDurationMs = 12000, onAutoStop?: (blob: Blob
     setError(null);
     if (typeof navigator === "undefined" || !navigator.mediaDevices?.getUserMedia) {
       setError("Microphone is not supported on this browser.");
-      return;
+      return false;
+    }
+    if (typeof MediaRecorder === "undefined") {
+      setError("Audio recording is not supported on this browser.");
+      return false;
     }
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
       chunksRef.current = [];
-      const recorder = new MediaRecorder(stream);
+      const mimeType = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+      ].find((type) => MediaRecorder.isTypeSupported(type));
+      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
@@ -64,8 +74,10 @@ export function useVoiceRecorder(maxDurationMs = 12000, onAutoStop?: (blob: Blob
           });
         }
       }, maxDurationMs);
+      return true;
     } catch {
       setError("Microphone permission was denied.");
+      return false;
     }
   }, [maxDurationMs, stop]);
 

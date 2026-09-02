@@ -17,18 +17,18 @@ export function WinnerFeatures() {
       </Link>
       <Link href="/voice-agent" className="winner-action winner-action-call">
         <span className="winner-action-icon"><AudioLines size={22} /></span>
-        <span><strong>Instant Voice Agent</strong><small>Ask about a government scheme in your language, voice to voice</small></span>
-        <span className="winner-arrow">AI</span>
+        <span><strong>Speak To Check</strong><small>Ask about a scheme in your language and listen to the answer</small></span>
+        <span className="winner-arrow">02</span>
       </Link>
       <Link href="/assistant" className="winner-action">
         <span className="winner-action-icon"><ShieldCheck size={22} /></span>
-        <span><strong>SatyaSetu AI Assistant</strong><small>Type or speak a scheme claim right here on the page</small></span>
-        <span className="winner-arrow">02</span>
+        <span><strong>Ask SatyaSetu</strong><small>Type or speak a scheme question</small></span>
+        <span className="winner-arrow">03</span>
       </Link>
       <Link href="/evidence-receipt" className="winner-action">
         <span className="winner-action-icon"><ReceiptText size={22} /></span>
-        <span><strong>Evidence Receipt</strong><small>View, listen to, or share your latest verification</small></span>
-        <span className="winner-arrow">03</span>
+        <span><strong>Proof Receipt</strong><small>View, listen to, or share your answer</small></span>
+        <span className="winner-arrow">04</span>
       </Link>
     </section>
   );
@@ -44,7 +44,7 @@ export function OfflinePacksDialog({
   onClose: () => void;
 }) {
   return (
-    <Dialog title="Offline trust packs" subtitle="Save small, official-information packs for weak or unavailable internet." onClose={onClose} wide>
+    <Dialog title="Saved information packs" subtitle="Save useful official information for weak internet." onClose={onClose} wide>
       <div className="offline-banner"><WifiOff size={18} /><span><strong>Works without a connection</strong>Installed packs are checked on this device and always display their update date.</span></div>
       <div className="pack-grid">
         {OFFLINE_PACKS.map((pack) => {
@@ -65,7 +65,7 @@ export function OfflinePacksDialog({
           );
         })}
       </div>
-      <p className="pack-disclaimer">Offline packs never silently claim to be live. SatyaSetu shows the saved date and asks users to reconnect for recent changes.</p>
+      <p className="pack-disclaimer">Saved information always shows its update date. Reconnect to check recent changes.</p>
     </Dialog>
   );
 }
