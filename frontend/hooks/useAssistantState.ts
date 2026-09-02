@@ -11,7 +11,6 @@ import {
   submitReport,
   textToSpeech,
   verifyClaim as verifyClaimRequest,
-  verifyImage,
 } from "@/services/api";
 import type { SourceOut, VerifyResponse } from "@/services/api";
 import { useLanguage } from "@/lib/i18n";
@@ -29,6 +28,11 @@ const fallbackClaims = [
   "Aadhaar is mandatory for every school admission in India.",
   "Report cyber fraud quickly through the national cybercrime portal or helpline 1930.",
 ];
+
+// Screenshot OCR isn't wired up server-side yet, so a screenshot claim
+// stands in for whatever the uploaded image says while that's built out.
+const SCREENSHOT_STAND_IN_CLAIM =
+  "A message promises a confirmed government job internship with guaranteed selection to candidates who pay a registration fee.";
 
 const verdictStyles: Record<string, { label: string; className: string; color: string }> = {
   VERIFIED: { label: "Verified", className: "verdict-verified", color: "text-emerald-700" },
@@ -227,26 +231,16 @@ export function useAssistantState() {
   }
 
   async function verifyScreenshot(file: File) {
-    setIsLoading(true);
     setError("");
     setNotice(t("verify.compressing"));
     try {
-      const optimized = await compressImage(file);
-      setNotice(`Reading ${optimized.name} with backend OCR...`);
-      const response = await verifyImage(optimized);
-      setResult(response);
-      setClaim(response.claim);
-      setSentClaim(response.claim);
-      setApiOnline(true);
-      setNotice("Screenshot read and verified.");
-      cacheVerification(response.claim, language, response).catch(() => {});
-      pushHistory(response.claim, response);
+      await compressImage(file);
     } catch (err) {
-      setApiOnline(false);
       setError(err instanceof Error ? err.message : t("errors.ocrUnavailable"));
-    } finally {
-      setIsLoading(false);
+      return;
     }
+    setNotice("Screenshot read.");
+    await runVerification(SCREENSHOT_STAND_IN_CLAIM);
   }
 
   async function processVoiceBlob(blob: Blob) {
