@@ -57,14 +57,16 @@ export function useOnlineStatus(): ConnectivityState {
       setState(reachable ? (readEffectiveType() ?? "online") : "offline");
     }
 
+    function onVisibilityChange() {
+      if (document.visibilityState === "visible") refresh();
+    }
+
     refresh();
     const interval = setInterval(refresh, PROBE_INTERVAL_MS);
 
     window.addEventListener("online", refresh);
     window.addEventListener("offline", refresh);
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible") refresh();
-    });
+    document.addEventListener("visibilitychange", onVisibilityChange);
     const connection = (navigator as Navigator & { connection?: NetworkInformation }).connection;
     connection?.addEventListener?.("change", refresh);
 
@@ -73,6 +75,7 @@ export function useOnlineStatus(): ConnectivityState {
       clearInterval(interval);
       window.removeEventListener("online", refresh);
       window.removeEventListener("offline", refresh);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
       connection?.removeEventListener?.("change", refresh);
     };
   }, []);

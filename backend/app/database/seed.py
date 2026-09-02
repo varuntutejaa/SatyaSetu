@@ -191,6 +191,78 @@ SOURCES = [
         "authority_level": "AUTHORITATIVE",
         "description": "Government of India's unified search platform for verifying genuine central and state schemes.",
     },
+    {
+        "key": "incometax",
+        "name": "Income Tax Department — e-Filing Portal",
+        "domain": "incometax.gov.in",
+        "category": "FINANCE",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official e-filing and taxpayer services portal of the Income Tax Department, Government of India.",
+    },
+    {
+        "key": "epfindia",
+        "name": "EPFO — Employees' Provident Fund Organisation",
+        "domain": "epfindia.gov.in",
+        "category": "FINANCE",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Statutory body under the Ministry of Labour and Employment administering employee provident fund accounts.",
+    },
+    {
+        "key": "passportindia",
+        "name": "Passport Seva — Ministry of External Affairs",
+        "domain": "passportindia.gov.in",
+        "category": "GOVERNMENT",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Official portal for passport applications, appointments, and status tracking.",
+    },
+    {
+        "key": "sebi",
+        "name": "SEBI — Securities and Exchange Board of India",
+        "domain": "sebi.gov.in",
+        "category": "FINANCE",
+        "authority_level": "AUTHORITATIVE",
+        "description": "India's securities market regulator, responsible for investor protection.",
+    },
+    {
+        "key": "trai",
+        "name": "TRAI — Telecom Regulatory Authority of India",
+        "domain": "trai.gov.in",
+        "category": "GOVERNMENT",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Statutory regulator for the telecommunications sector in India.",
+    },
+    {
+        "key": "npci",
+        "name": "NPCI — National Payments Corporation of India",
+        "domain": "npci.org.in",
+        "category": "BANKING",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Umbrella organisation operating UPI and other retail digital payment systems in India.",
+    },
+    {
+        "key": "indiapost",
+        "name": "India Post — Department of Posts",
+        "domain": "indiapost.gov.in",
+        "category": "GOVERNMENT",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Government department operating India's postal network and parcel/customs delivery services.",
+    },
+    {
+        "key": "eci",
+        "name": "Election Commission of India",
+        "domain": "eci.gov.in",
+        "category": "GOVERNMENT",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Constitutional body responsible for administering elections in India.",
+    },
+    {
+        "key": "fssai",
+        "name": "FSSAI — Food Safety and Standards Authority of India",
+        "domain": "fssai.gov.in",
+        "category": "HEALTHCARE",
+        "authority_level": "AUTHORITATIVE",
+        "description": "Statutory body regulating food safety standards and licensing under the Ministry of Health and Family Welfare.",
+    },
 ]
 
 DOCUMENTS = [
@@ -527,6 +599,115 @@ DOCUMENTS = [
             "be verified against the official recruiting body's notification before any payment is made."
         ),
     },
+    {
+        "source_key": "incometax",
+        "title": "Income tax refunds are never released through a link in an SMS or email",
+        "url": "https://www.incometax.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "The Income Tax Department has clarified that tax refunds are credited directly to a taxpayer's "
+            "pre-validated bank account after processing on the official e-filing portal, and the department "
+            "never asks taxpayers to click a link in an SMS or email and enter bank, card, or OTP details to "
+            "'release' a refund. Any such message is a phishing attempt and should be reported, not acted on."
+        ),
+    },
+    {
+        "source_key": "epfindia",
+        "title": "EPFO never asks members to share their UAN password or OTP by phone or SMS",
+        "url": "https://www.epfindia.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "EPFO has clarified that it never contacts members by phone or SMS asking them to share their "
+            "UAN password, OTP, or bank PIN to process a provident fund withdrawal or transfer. All EPF "
+            "withdrawal and transfer requests must be submitted only through the official EPFO member portal "
+            "or the UMANG app, and any caller asking for these details over the phone is attempting fraud."
+        ),
+    },
+    {
+        "source_key": "passportindia",
+        "title": "Passport Seva does not offer paid shortcuts around police verification",
+        "url": "https://www.passportindia.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "Passport Seva processes applications only through its official appointment and payment system "
+            "on passportindia.gov.in, and passport issuance timelines and police verification requirements "
+            "cannot be bypassed for an extra fee. Agents or messages offering a guaranteed 'instant passport' "
+            "or 'skip verification' service in exchange for payment outside this official process are fraudulent."
+        ),
+    },
+    {
+        "source_key": "sebi",
+        "title": "No registered advisor can guarantee fixed returns on stock market investments",
+        "url": "https://www.sebi.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "SEBI has repeatedly warned that stock market investments carry risk and no SEBI-registered "
+            "investment advisor, broker, or portfolio manager can lawfully guarantee fixed or assured returns. "
+            "Messages, calls, or social media groups promising guaranteed high daily or monthly returns on "
+            "stock or derivatives trading are a common investment fraud pattern and should be reported."
+        ),
+    },
+    {
+        "source_key": "trai",
+        "title": "TRAI does not send SMS threatening mobile number disconnection over KYC",
+        "url": "https://www.trai.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "TRAI has clarified that it does not send SMS or calls to individual mobile subscribers "
+            "threatening disconnection of their number within a few hours due to pending KYC or Aadhaar "
+            "verification. These messages, often asking the recipient to press a number or call back, are a "
+            "phishing scam impersonating the telecom regulator and should not be acted upon."
+        ),
+    },
+    {
+        "source_key": "npci",
+        "title": "Entering a UPI PIN is only required to send money, never to receive it",
+        "url": "https://www.npci.org.in/",
+        "language": "en-IN",
+        "content": (
+            "NPCI has clarified that UPI PIN entry is required only to authorize an outgoing payment; no "
+            "genuine UPI transaction ever requires entering a PIN to receive money, accept a refund, or claim "
+            "a cashback. Any request or QR code that asks for a PIN to 'collect' a payment is a scam designed "
+            "to trick the victim into authorizing money out of their own account."
+        ),
+    },
+    {
+        "source_key": "indiapost",
+        "title": "India Post does not collect customs or delivery fees through SMS links",
+        "url": "https://www.indiapost.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "India Post has warned that it does not send SMS messages with external links asking recipients "
+            "to pay a customs duty, delivery charge, or 'parcel release' fee to receive a held package. "
+            "Genuine customs duties are payable only through official India Post or Customs department "
+            "channels, and messages with unfamiliar payment links are a courier/parcel scam."
+        ),
+    },
+    {
+        "source_key": "eci",
+        "title": "The Election Commission of India is the sole authority for official election results",
+        "url": "https://www.eci.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "The Election Commission of India is the constitutional authority responsible for conducting "
+            "elections and declaring official results in India. Unofficial vote counts, exit-poll numbers "
+            "presented as final results, or claims of result manipulation circulated on social media before "
+            "the ECI's own announcement should not be treated as confirmed until verified on the ECI's "
+            "official channels."
+        ),
+    },
+    {
+        "source_key": "fssai",
+        "title": "A genuine FSSAI license can be verified by its 14-digit number on the FSSAI portal",
+        "url": "https://www.fssai.gov.in/",
+        "language": "en-IN",
+        "content": (
+            "FSSAI requires every licensed food business to display a 14-digit license or registration number "
+            "on its packaging or premises, and this number can be verified directly on the official FSSAI "
+            "portal. A business or product claiming 'FSSAI approved' status without a verifiable 14-digit "
+            "number should not be trusted as genuinely licensed."
+        ),
+    },
 ]
 
 DEMO_CLAIMS = [
@@ -594,14 +775,24 @@ DEMO_CLAIMS = [
 
 
 def seed_if_empty(db: Session) -> None:
-    if db.query(Source).count() > 0:
-        return
+    """Seeds any SOURCES/DOCUMENTS not already present.
 
+    Originally an all-or-nothing "only run against a completely empty
+    database" gate. Changed to per-item idempotency (matched by domain for
+    sources, by title for documents) so new entries added to SOURCES/
+    DOCUMENTS later actually reach an already-seeded database on the next
+    deploy, instead of silently never being applied."""
     embedder = LocalHashingEmbeddingProvider()
     now = datetime.now(timezone.utc)
 
-    sources_by_key = {}
+    existing_sources_by_domain = {source.domain: source for source in db.query(Source).all()}
+    sources_by_key: dict[str, Source] = {}
+
     for spec in SOURCES:
+        existing = existing_sources_by_domain.get(spec["domain"])
+        if existing is not None:
+            sources_by_key[spec["key"]] = existing
+            continue
         source = Source(
             name=spec["name"],
             domain=spec["domain"],
@@ -617,7 +808,11 @@ def seed_if_empty(db: Session) -> None:
         db.flush()
         sources_by_key[spec["key"]] = source
 
+    existing_doc_titles = {title for (title,) in db.query(Document.title).all()}
+
     for doc_spec in DOCUMENTS:
+        if doc_spec["title"] in existing_doc_titles:
+            continue
         source = sources_by_key[doc_spec["source_key"]]
         document = Document(
             source_id=source.id,

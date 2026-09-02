@@ -9,6 +9,19 @@ from app.rag.ranking import rank_score
 
 TOP_K = 6
 
+# Document embeddings never change at runtime (seeded once, no endpoint
+# mutates them) — re-parsing the same JSON vector on every single
+# verification request was pure waste, and it scales with corpus size.
+_embedding_cache: dict[int, list[float]] = {}
+
+
+def _cached_vector(chunk_id: int, raw_embedding: str) -> list[float]:
+    vector = _embedding_cache.get(chunk_id)
+    if vector is None:
+        vector = json.loads(raw_embedding)
+        _embedding_cache[chunk_id] = vector
+    return vector
+
 
 def retrieve_evidence(db: Session, claim_text: str, embedder: EmbeddingProvider, top_k: int = TOP_K) -> list[dict]:
     """Vector Search + Trusted Source Filter, per the RAG pipeline in the spec.
@@ -34,7 +47,7 @@ def retrieve_evidence(db: Session, claim_text: str, embedder: EmbeddingProvider,
 
     scored = []
     for chunk, document, source in rows:
-        chunk_vector = json.loads(chunk.embedding)
+        chunk_vector = _cached_vector(chunk.id, chunk.embedding)
         similarity = cosine_similarity(claim_vector, chunk_vector)
         score = rank_score(similarity, source.authority_level, document.published_at)
         scored.append({
